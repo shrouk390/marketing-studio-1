@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>The Investment Committee</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Instrument+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: one boardroom stage under a sticky scoreboard. Coins are the recurring object; the BCG map is the centrepiece of Round 2. */
+:root{
+  --bg:#EDF2F0; --surface:#FFFFFF; --ink:#12201E; --muted:#51635F; --line:#C9D5D1; --chip:#E0E9E6;
+  --accent:#0E7C7B; --accent-ink:#FFFFFF; --coin:#D49A12; --coin-ink:#3A2A00;
+  --good:#1C7A44; --good-bg:#E1F1E7; --bad:#B3392B; --bad-bg:#F8E5E1; --scrim:rgba(8,20,19,.55);
+  --f-display:'Unbounded','Trebuchet MS',system-ui,sans-serif;
+  --f-body:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'DM Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0B1819; --surface:#122426; --ink:#E6F0EE; --muted:#9FB5B0; --line:#25403F; --chip:#1A3234;
+  --accent:#3CC1BC; --accent-ink:#04201F; --coin:#F0B63A; --coin-ink:#2B1F00;
+  --good:#4CC17E; --good-bg:#12301F; --bad:#F07A6A; --bad-bg:#3A1C18; --scrim:rgba(0,0,0,.65); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0B1819; --surface:#122426; --ink:#E6F0EE; --muted:#9FB5B0; --line:#25403F; --chip:#1A3234;
+  --accent:#3CC1BC; --accent-ink:#04201F; --coin:#F0B63A; --coin-ink:#2B1F00;
+  --good:#4CC17E; --good-bg:#12301F; --bad:#F07A6A; --bad-bg:#3A1C18; --scrim:rgba(0,0,0,.65); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;padding-inline:16px;padding-block:0 48px}
+.wrap{max-width:920px;margin-inline:auto}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+button,select,textarea,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* scoreboard */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding-block:10px;margin-bottom:24px;display:flex;flex-direction:column;gap:8px}
+.hud-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hud-right{display:flex;align-items:center;gap:12px}
+.score{font-family:var(--f-display);font-size:20px;font-variant-numeric:tabular-nums}
+.score small{font-family:var(--f-mono);font-size:12px;color:var(--muted);font-weight:400}
+.track{display:flex;gap:6px;flex-wrap:wrap}
+.track span{font-family:var(--f-mono);font-size:12px;padding:4px 10px;border-radius:99px;background:var(--chip);color:var(--muted)}
+.track span.on{background:var(--accent);color:var(--accent-ink)}
+.track span.done{color:var(--ink)}
+
+.btn{border:0;border-radius:10px;padding:12px 20px;font-weight:600;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+.btn:hover{filter:brightness(1.08)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:none}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line);padding:8px 14px;font-size:14px}
+.btn.ghost:hover{box-shadow:inset 0 0 0 1.5px var(--accent)}
+
+.stage{display:flex;flex-direction:column;gap:20px}
+.kicker{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+.lead{color:var(--muted);max-width:62ch}
+.q-head{display:flex;flex-direction:column;gap:8px}
+.q-head h2{font-size:clamp(20px,3.4vw,28px)}
+.dots{display:flex;gap:6px}
+.dots i{width:22px;height:5px;border-radius:3px;background:var(--line)}
+.dots i.d{background:var(--accent)}
+.dots i.c{background:var(--ink)}
+
+/* intro */
+.hero h1{font-size:clamp(30px,7vw,56px)}
+.hero{display:flex;flex-direction:column;gap:16px;padding-block:8px}
+.rounds{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.rounds .card{display:flex;flex-direction:column;gap:6px}
+.rounds b{font-family:var(--f-display);font-size:15px}
+.pts{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.form{display:grid;gap:12px;max-width:560px}
+.form label{display:grid;gap:6px;font-weight:600;font-size:14px}
+.form input,.form textarea,.own textarea{border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;width:100%;resize:vertical}
+ul.rules{margin:0;padding-left:20px;color:var(--muted);display:grid;gap:4px;max-width:62ch}
+
+/* choices */
+.opts{display:grid;gap:10px}
+.opt{display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;align-items:start}
+.opt:hover:not([disabled]){border-color:var(--accent)}
+.opt .l{font-family:var(--f-mono);width:28px;height:28px;border-radius:8px;background:var(--chip);display:grid;place-items:center;font-size:13px}
+.opt .fb{display:block;margin-top:6px;font-size:14px;color:var(--bad)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg);cursor:default}
+.opt.right{border-color:var(--good);background:var(--good-bg);cursor:default}
+.opt[disabled]{cursor:default}
+.why{border-left:4px solid var(--accent);padding:12px 16px;background:var(--surface);border-radius:0 10px 10px 0}
+.earn{font-family:var(--f-display);font-size:18px;color:var(--good);animation:pop .4s ease-out}
+.earn.zero{color:var(--muted)}
+@keyframes pop{from{transform:translateY(6px);opacity:0}to{transform:none;opacity:1}}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.own{display:grid;gap:6px;font-size:14px;font-weight:600}
+.prodpick{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.prodpick button{text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;display:grid;gap:6px}
+.prodpick button:hover{border-color:var(--accent)}
+.prodpick b{font-family:var(--f-display);font-size:14px}
+.prodpick span{font-size:14px;color:var(--muted)}
+
+/* invest */
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:var(--f-mono);font-size:12px;background:var(--chip);border-radius:6px;padding:3px 8px;font-variant-numeric:tabular-nums}
+.tray{display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:calc(env(safe-area-inset-top,0px) + 84px);z-index:4;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+.coins{display:flex;gap:5px;flex-wrap:wrap}
+.coin{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--coin) 65%,#fff),var(--coin));box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--coin) 60%,#000)}
+.coin.empty{background:transparent;box-shadow:inset 0 0 0 2px var(--line)}
+.coin.sm{width:16px;height:16px}
+.tray b{font-family:var(--f-display);font-size:15px;font-variant-numeric:tabular-nums}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:16px}
+.pcard{display:flex;flex-direction:column;gap:12px;min-width:0}
+.pcard h3{font-size:16px}
+.pcard .what{color:var(--muted);font-size:14px}
+.field{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+select{border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;width:100%;color:var(--ink)}
+.stepper{display:flex;align-items:center;gap:12px}
+.stepper button{width:40px;height:40px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);font-size:20px;cursor:pointer;line-height:1}
+.stepper button:hover:not([disabled]){border-color:var(--accent)}
+.stepper button[disabled]{opacity:.35;cursor:not-allowed}
+.stepper .n{font-family:var(--f-display);font-size:22px;min-width:1.4em;text-align:center;font-variant-numeric:tabular-nums}
+.pips{display:flex;gap:4px}
+.mapcard svg{width:100%;height:auto;display:block}
+.mapcard .note{font-size:13px;color:var(--muted);margin-top:8px}
+.svgtxt{font-family:var(--f-mono);fill:var(--muted)}
+details.refresh{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+details summary{cursor:pointer;font-weight:600}
+details dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:10px 0 0}
+details dt{font-weight:600}details dd{margin:0;color:var(--muted)}
+.need{font-size:14px;color:var(--muted)}
+.res{display:grid;gap:10px}
+.res .rp{display:grid;gap:4px;padding:12px 0;border-top:1px solid var(--line);min-width:0}
+.ok{color:var(--good);font-weight:600}.no{color:var(--bad);font-weight:600}
+
+/* verdict */
+.big{font-family:var(--f-display);font-size:clamp(48px,12vw,96px);line-height:1;font-variant-numeric:tabular-nums}
+.big small{font-size:.3em;color:var(--muted);font-family:var(--f-mono);font-weight:400}
+.bars{display:grid;gap:10px}
+.bar{display:grid;grid-template-columns:110px minmax(0,1fr) 60px;gap:10px;align-items:center;font-size:14px}
+.bar .t{height:10px;background:var(--chip);border-radius:5px;overflow:hidden}
+.bar .t i{display:block;height:100%;background:var(--accent)}
+.bar span:last-child{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums}
+.badges{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.badge{display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;align-items:center;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface)}
+.badge.off{opacity:.5}
+.badge .coin{width:30px;height:30px}
+.badge.off .coin{background:transparent;box-shadow:inset 0 0 0 2px var(--line)}
+.badge b{font-size:14px;display:block}.badge span{font-size:13px;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+textarea.sum{width:100%;min-height:200px;border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:12px;font-family:var(--f-mono);font-size:12px}
+
+/* case file */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:20;display:grid;place-items:center;padding:16px}
+.sheet{background:var(--surface);border-radius:16px;max-width:760px;width:100%;max-height:calc(100% - 8px);overflow:auto;padding:24px;display:grid;gap:16px}
+.sheet h2{font-size:22px}.sheet h3{font-size:14px;font-family:var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:500}
+.sheet blockquote{margin:0;padding:4px 0 4px 14px;border-left:3px solid var(--coin);color:var(--ink)}
+.sheet .quotes{display:grid;gap:10px}
+
+@media (max-width:520px){
+  .bar{grid-template-columns:80px minmax(0,1fr) 54px}
+  .tray{top:calc(env(safe-area-inset-top,0px) + 104px)}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="hud">
+    <div class="hud-row">
+      <span class="brand">Nilo Tech &middot; Investment Committee</span>
+      <div class="hud-right">
+        <span class="score" id="score">0 <small>/ 100</small></span>
+        <button class="btn ghost" data-act="casefile" id="casebtn" type="button">Case file</button>
+      </div>
+    </div>
+    <div class="track" id="track"></div>
+  </header>
+  <main class="stage" id="stage" aria-live="polite"></main>
+</div>
+
+<div class="scrim" id="case" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="casetitle">
+    <div class="row" style="justify-content:space-between">
+      <h2 id="casetitle">Case file: Nilo Tech</h2>
+      <button class="btn ghost" data-act="closecase" id="caseclose" type="button">Close</button>
+    </div>
+    <div>
+      <h3>Company</h3>
+      <p>Egyptian consumer-tech company founded in Cairo in 2015. It sells through its website, Instagram and electronics shops in several cities. Most customers are students and young professionals aged 17 to 30.</p>
+      <p style="margin-top:8px"><b>Current mission:</b> &ldquo;We sell phone accessories and audio gadgets.&rdquo;</p>
+    </div>
+    <div>
+      <h3>Portfolio</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Product</th><th class="num">Sales (EGP M)</th><th class="num">Rel. share</th><th class="num">Growth</th></tr></thead>
+        <tbody>
+          <tr><td>Cases &amp; Chargers</td><td class="num">90</td><td class="num">2.0</td><td class="num">+2%</td></tr>
+          <tr><td>Nilo Buds</td><td class="num">70</td><td class="num">1.5</td><td class="num">+25%</td></tr>
+          <tr><td>Nilo Fit</td><td class="num">15</td><td class="num">0.2</td><td class="num">+30%</td></tr>
+          <tr><td>Nilo Wired</td><td class="num">25</td><td class="num">0.3</td><td class="num">&minus;10%</td></tr>
+        </tbody></table></div>
+      <p class="pts" style="margin-top:6px">Relative share above 1 means Nilo leads. Below 1 means a rival is bigger.</p>
+    </div>
+    <div>
+      <h3>What customers say</h3>
+      <div class="quotes">
+        <blockquote>&ldquo;I bought the charger because it was cheap and didn't break. I couldn't tell you the brand.&rdquo;</blockquote>
+        <blockquote>&ldquo;I wear my earbuds on the metro so I can block out the noise and study.&rdquo;</blockquote>
+        <blockquote>&ldquo;Everyone in my class has a smartwatch now, but mine is not the one people ask about.&rdquo;</blockquote>
+        <blockquote>&ldquo;My wired headphones sound great, but my new phone doesn't even have a headphone jack.&rdquo;</blockquote>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const L='ABCD';
+const CLS={star:'Star',cow:'Cash cow',qm:'Question mark',dog:'Dog'};
+
+/* ---------- data ---------- */
+const PROD=[
+ {id:'cases',name:'Cases & Chargers',short:'Cases & Chargers',what:'Phone cases, cables and chargers',sales:90,share:2.0,growth:2,bcg:'cow',
+  created:{ok:'Reliable, affordable accessories that work and do not break.',bad:[
+    {t:'EGP 90 million in yearly sales.',fb:'That is money Nilo earns, so it is value captured.'},
+    {t:'A brand customers know and prefer.',fb:'The customer quote says the opposite: they could not name the brand.'}]},
+  captured:{ok:'EGP 90 million in yearly sales and a 2.0 relative share, the biggest revenue in the portfolio.',bad:[
+    {t:'Customers get a charger that does not break.',fb:'That is a customer benefit, so it is value created.'},
+    {t:'Customers who prefer the Nilo brand and pay more for it.',fb:'The sheet shows buyers choose on price and cannot name the brand.'}]},
+  reasons:{ok:'High share in a slow market. It earns steady cash and needs little investment.',bad:['Its market grows fast, so it needs the most tokens.','Customers love the brand, so we should double down.']},
+  alloc:(t,z)=>t===0?(z==='run'?[4,'Leaving a cash cow to run on its own is sound. It already earns EGP 90 million without help.']:[0,'Dropping your biggest earner would remove the cash that funds growth.']):t<=2?[4,'A small top-up protects a steady earner without wasting tokens in a market growing 2%.']:t===3?[2,'A little high. Slow growth means extra tokens buy little extra sales.']:[0,'Too much for a 2% market. Its job is to make cash, not absorb it.']},
+ {id:'buds',name:'Nilo Buds',short:'Nilo Buds',what:'Wireless earbuds',sales:70,share:1.5,growth:25,bcg:'star',
+  created:{ok:'Lets students shut out metro noise to study and commute without cables.',bad:[
+    {t:'EGP 70 million in yearly sales.',fb:'That is money Nilo earns, so it is value captured.'},
+    {t:'Market leadership with a 1.5 relative share.',fb:'That is Nilo\'s position in the market, so it is value captured.'}]},
+  captured:{ok:'EGP 70 million in yearly sales and market leadership (1.5 share) in a market growing 25% a year.',bad:[
+    {t:'Quiet commutes and better study sessions for customers.',fb:'That is a customer benefit, so it is value created.'},
+    {t:'Customers pay less than they would for rival earbuds.',fb:'Nothing in the sheet says that, and a lower price is value given up, not captured.'}]},
+  reasons:{ok:'Market leader in a market growing 25% a year. Investing protects the lead.',bad:['Slow growth means it will pay for itself with no investment.','Low share, so it needs rescuing.']},
+  alloc:(t)=>t>=4?[4,'Right call. A leader in a market growing 25% a year is where tokens work hardest.']:t===3?[2,'Reasonable, but the evidence supports more for a leader in a fast market.']:[0,'Too little. This is the best growth opportunity and the lead can erode.']},
+ {id:'fit',name:'Nilo Fit',short:'Nilo Fit',what:'Smartwatch and fitness band',sales:15,share:0.2,growth:30,bcg:'qm',
+  created:{ok:'A smartwatch and fitness band for tracking activity and staying connected, though it does not yet stand out.',bad:[
+    {t:'EGP 15 million in yearly sales.',fb:'That is money Nilo earns, so it is value captured.'},
+    {t:'The status of owning the watch everyone asks about.',fb:'The customer quote says theirs is not the one people ask about.'}]},
+  captured:{ok:'EGP 15 million in yearly sales, with only a 0.2 relative share in a market growing 30% a year.',bad:[
+    {t:'Customers track their fitness and stay connected.',fb:'That is a customer benefit, so it is value created.'},
+    {t:'Leadership of the smartwatch market.',fb:'A 0.2 share means the leader sells five times more than Nilo.'}]},
+  reasons:{ok:'Fast-growing market but only 0.2 share. Invest selectively to test whether Nilo can win share.',bad:['We lead the market, so cut investment and collect the cash.','The market is shrinking, so exit.']},
+  alloc:(t)=>(t>=2&&t<=4)?[4,'A measured bet. The market grows 30% a year, but a 0.2 share means the product needs fixing as well as funding.']:t===5?[2,'A big bet on a product that is not winning yet. Fund it, but keep some risk limits.']:t===1?[2,'A light touch. The market is growing fast, so one token may not change much.']:[0,'Ignoring a market growing 30% a year gives up the chance to find out whether Nilo Fit can win.']},
+ {id:'wired',name:'Nilo Wired',short:'Nilo Wired',what:'Wired headphones',sales:25,share:0.3,growth:-10,bcg:'dog',
+  created:{ok:'Good sound quality for customers who like wired headphones.',bad:[
+    {t:'EGP 25 million in yearly sales.',fb:'That is money Nilo earns, so it is value captured.'},
+    {t:'Works with the latest phones.',fb:'The customer quote says their new phone has no headphone jack.'}]},
+  captured:{ok:'EGP 25 million in yearly sales, in a market shrinking 10% a year.',bad:[
+    {t:'Great sound for listeners who value it.',fb:'That is a customer benefit, so it is value created.'},
+    {t:'Strong market leadership.',fb:'A 0.3 share means the leader sells over three times more than Nilo.'}]},
+  reasons:{ok:'Shrinking market, weak share, and new phones are losing the headphone jack. Little reason to invest.',bad:['Great sound quality means it will rebound.','Its sales justify the biggest investment.']},
+  alloc:(t,z)=>t<=1?[4,t===0?(z==='drop'?'Dropping it is defensible. The market shrinks 10% a year and phones are losing the headphone jack.':'Leaving it to run on its own is defensible. It still brings in EGP 25 million.'):'One token to collect what remains is defensible.']:t===2?[2,'More than the evidence supports for a shrinking market.']:[0,'Tokens here chase a market that is shrinking and are unlikely to pay back.']}
+];
+const P=Object.fromEntries(PROD.map(p=>[p.id,p]));
+
+/* ---------- state ---------- */
+let S;
+function fresh(){return{screen:'intro',team:'',members:'',i:0,product:null,q:{},order:{},ownMission:'',
+  alloc:{cases:0,buds:0,fit:0,wired:0},cls:{},zero:{},reason:{},rorder:{},r2:null,r3:null,focus:null}}
+S=fresh();
+
+/* ---------- steps ---------- */
+function r1Steps(){
+ const p=S.product?P[S.product]:null;
+ return[
+  {id:'cust',kicker:'Customer',pts:10,prompt:'Which sentence best describes Nilo Tech\'s target customer?',
+   opts:[
+    {t:'Anyone who owns a phone.',fb:'Too broad. A target customer is a defined group, and the sheet tells you who most buyers are.'},
+    {t:'Students and young professionals aged 17 to 30 in Egyptian cities who want affordable, reliable tech for commuting, studying and daily life.',ok:1},
+    {t:'Wealthy gadget fans who want premium, high-end devices.',fb:'The evidence points the other way. One customer bought a charger because it was cheap.'},
+    {t:'Teenage Instagram users in Cairo.',fb:'Too narrow. Nilo sells in several cities and in shops as well as on Instagram, and customers go up to age 30.'}],
+   why:'A strong target customer sentence says who they are (age, life stage, place) and what they need. Here that is students and young professionals aged 17 to 30 who want affordable, reliable tech for the metro, study and everyday life.'},
+  {id:'pick',type:'pick',kicker:'Value'},
+  {id:'created',kicker:'Value created',pts:7,
+   prompt:p?`${p.name}: which statement describes the value Nilo CREATES for the customer?`:'',
+   opts:p?[{t:p.created.ok,ok:1},...p.created.bad]:[],
+   why:'Value created is the benefit the customer receives. Money and market position that Nilo earns belong under value captured.'},
+  {id:'captured',kicker:'Value captured',pts:8,
+   prompt:p?`${p.name}: which statement describes the value Nilo CAPTURES in return?`:'',
+   opts:p?[{t:p.captured.ok,ok:1},...p.captured.bad]:[],
+   why:'Value captured is what Nilo gets back: revenue, share and market position. Benefits to the customer belong under value created.'},
+  {id:'mtype',kicker:'Mission',pts:5,
+   prompt:'The current mission is: "We sell phone accessories and audio gadgets." Is it product-oriented or market-oriented?',
+   opts:[{t:'Product-oriented',ok:1},{t:'Market-oriented',fb:'It names what Nilo sells, not the customer need it serves.'}],
+   why:'It defines the business by its products. A market-oriented mission starts from the customer need the products meet.'},
+  {id:'mrewrite',kicker:'Mission',pts:10,own:1,
+   prompt:'Which rewrite is a market-oriented mission?',
+   opts:[
+    {t:'We sell the best phone accessories and audio gadgets in Egypt.',fb:'Still product-oriented. It only adds "best".'},
+    {t:'We help young Egyptians study, commute and stay connected with affordable, reliable audio and mobile tech.',ok:1},
+    {t:'We aim to be the number one electronics company in the Middle East.',fb:'That is an ambition about size. It says nothing about the customer need.'},
+    {t:'We make wireless earbuds and smartwatches.',fb:'Product-oriented again, only with a shorter product list.'}],
+   why:'A market-oriented mission names the customer and the need: young Egyptians who want to study, commute and stay connected, served with affordable, reliable tech.'}
+ ];
+}
+function r3Steps(){
+ const a=S.alloc;const out=[];
+ out.push(a.wired===0?{id:'c1',pts:7,
+  prompt:'"You gave Nilo Wired nothing, but it still sells EGP 25 million a year. What happens to those customers?"',
+  opts:[
+   {t:'We let sales run down over time, point loyal listeners to Nilo Buds, and use the freed tokens where growth is.',ok:1},
+   {t:'Nothing changes. Those customers will move to our other products on their own.',fb:'That is hope, not a plan. Without guidance they may go to a rival.'},
+   {t:'We cut the price until sales grow again.',fb:'Price cuts cannot fix a market shrinking 10% a year, and Nilo holds only a 0.3 share.'}],
+  why:'A planned run-down protects the customer relationship and moves resources to growth.'}
+ :{id:'c1',pts:7,
+  prompt:'"Why spend tokens on a market shrinking 10% a year, when new phones are dropping the headphone jack?"',
+  opts:[
+   {t:'Only enough to collect the remaining sales cheaply while steering listeners toward Nilo Buds.',ok:1},
+   {t:'Great sound quality will bring wired headphones back.',fb:'A loyal niche is not a growing market. The missing jack points to a lasting decline.'},
+   {t:'Wired sells EGP 25 million, so it deserves a big share of the tokens.',fb:'Past sales do not justify new investment in a shrinking market where Nilo is weak.'}],
+  why:'Harvest what remains at low cost and move the customers toward the growth product.'});
+ out.push(a.fit>=3?{id:'c2',pts:7,
+  prompt:'"Nilo Fit has a 0.2 share and the leader sells five times more. Why back it?"',
+  opts:[
+   {t:'The market grows 30% a year, so we fund a focused test with a clear target and review it next year.',ok:1},
+   {t:'Everyone has a smartwatch, so ours will sell itself.',fb:'The customer said theirs is not the one people ask about. Demand for the category is not demand for Nilo\'s watch.'},
+   {t:'We had tokens left over, so it gets them.',fb:'Tokens go where the evidence points, not where they happen to be left.'}],
+  why:'A question mark deserves a bounded bet with a clear test, not an open cheque.'}
+ :{id:'c2',pts:7,
+  prompt:'"The smartwatch market grows 30% a year and you held back. Aren\'t you missing the boat?"',
+  opts:[
+   {t:'With a 0.2 share and a weak position, we fix what makes Nilo Fit stand out before we scale spending.',ok:1},
+   {t:'Smartwatches are a fad that will fade.',fb:'A market growing 30% a year is not fading. The problem is Nilo\'s weak position in it.'},
+   {t:'We cannot compete with a rival five times bigger, so we exit.',fb:'Exit may come later, but a fast-growing market deserves a test before giving up.'}],
+  why:'A question mark needs a position worth funding. Fixing the proposition first is a valid, disciplined answer.'});
+ out.push(a.buds>=4?{id:'c3',pts:6,
+  prompt:'"You put most of the tokens on earbuds. What if a rival copies them?"',
+  opts:[
+   {t:'We defend the lead where it is strongest, the study and commute need, funded by steady cash from Cases & Chargers.',ok:1},
+   {t:'Rivals cannot copy our brand.',fb:'Customers could not name the brand for the charger. Do not assume loyalty.'},
+   {t:'Then we move the tokens to Wired next year.',fb:'Wired is shrinking. Moving there takes money away from growth.'}],
+  why:'The cash cow funds the star, and the star keeps its edge by owning a clear customer need.'}
+ :{id:'c3',pts:6,
+  prompt:'"Nilo Buds leads a market growing 25% a year, yet you funded it lightly. Defend that."',
+  opts:[
+   {t:'Buds is where Nilo should win, so I would put more here if we could redo the split.',ok:1},
+   {t:'Market leaders do not need investment.',fb:'A leader in a fast-growing market must keep investing or the lead erodes.'},
+   {t:'Customers already love the brand.',fb:'The sheet has no evidence of brand love. Its evidence is about use: blocking metro noise to study.'}],
+  why:'Admitting the weak spot is fine. The star is the best place for tokens.'});
+ return out.map(s=>({...s,kicker:'Cross-examination'}));
+}
+function steps(){return S.screen==='r1'?r1Steps():r3Steps()}
+
+/* ---------- scoring ---------- */
+function total(){let s=0;for(const k in S.q)s+=S.q[k].earned||0;if(S.r2)s+=S.r2.total;return s}
+function sumIds(ids){return ids.reduce((a,k)=>a+((S.q[k]&&S.q[k].earned)||0),0)}
+function scoreR2(){
+ let cls=0,alloc=0,reason=0;const rows=[];
+ PROD.forEach(p=>{
+  const t=S.alloc[p.id],c=S.cls[p.id],z=S.zero[p.id];
+  const cOk=c===p.bcg;if(cOk)cls+=4;
+  const [ap,at]=p.alloc(t,z);alloc+=ap;
+  const rOk=S.reason[p.id]===0;if(rOk)reason+=2;
+  rows.push({p,t,c,cOk,ap,at,rOk});
+ });
+ return{cls,alloc,reason,total:cls+alloc+reason,rows};
+}
+function titleFor(n){return n>=90?'Chair of the Committee':n>=75?'Senior Strategist':n>=55?'Strategy Analyst':'Intern with Potential'}
+
+/* ---------- views ---------- */
+function track(){
+ const names=['Diagnose','Invest','Defend','Verdict'];
+ const cur={intro:-1,r1:0,r2:1,r3:2,end:3}[S.screen];
+ $('#track').innerHTML=names.map((n,i)=>`<span class="${i===cur?'on':i<cur?'done':''}">${i+1} ${n}</span>`).join('');
+ $('#score').innerHTML=`${total()} <small>/ 100</small>`;
+}
+function dots(n,idx,list){
+ return `<div class="dots" aria-hidden="true">${list.map((s,i)=>{const d=S.q[s.id]&&S.q[s.id].done;return `<i class="${d?'d':i===idx?'c':''}"></i>`}).join('')}</div>`;
+}
+function introView(){
+ return `<section class="hero">
+  <span class="kicker">Marketing Studio 1 &middot; BUS 1410</span>
+  <h1>The Investment Committee</h1>
+  <p class="lead">You are the strategy team at Nilo Tech, a Cairo consumer-tech company. The CEO has called an emergency meeting. She has 10 investment tokens for next year and wants your recommendation before the session ends. Use the case file, trust your evidence, and be ready to defend every call.</p>
+ </section>
+ <div class="rounds">
+  <div class="card"><span class="kicker">Round 1</span><b>Diagnose</b><p>Size up the customer, the value Nilo creates and captures, and the mission.</p><span class="pts">40 points</span></div>
+  <div class="card"><span class="kicker">Round 2</span><b>Invest</b><p>Place each product on the growth-share map and spend all 10 tokens.</p><span class="pts">40 points</span></div>
+  <div class="card"><span class="kicker">Round 3</span><b>Defend</b><p>The CEO cross-examines your split. Pick the answer you can stand behind.</p><span class="pts">20 points</span></div>
+ </div>
+ <ul class="rules">
+  <li>Reason from the case file and your own judgement. Open it any time with the Case file button.</li>
+  <li>In Rounds 1 and 3, a wrong pick lets you try again for half the points.</li>
+  <li>In Round 2 you commit once. No product gets more than 5 tokens, and you must spend all 10.</li>
+  <li>Play as a group on one screen, and make sure everyone can explain each answer.</li>
+ </ul>
+ <form class="form" id="startform">
+  <label for="team">Team name<input id="team" type="text" placeholder="Team Nilo" maxlength="40" autocomplete="off"></label>
+  <label for="members">Group members<textarea id="members" rows="2" placeholder="One name per line or separated by commas"></textarea></label>
+  <div><button class="btn" type="submit" data-act="start">Enter the boardroom</button></div>
+ </form>`;
+}
+function pickView(step,idx,list){
+ return `<div class="q-head"><span class="kicker">Round 1 &middot; Diagnose &middot; ${step.kicker}</span>${dots(0,idx,list)}
+  <h2>Choose one product to analyse.</h2>
+  <p class="lead">You will pick the value Nilo creates for customers and the value it captures in return. Choose the product your team can explain best.</p></div>
+  <div class="prodpick">${PROD.map(p=>`<button type="button" data-act="product" data-p="${p.id}"><b>${p.name}</b><span>${p.what}</span><span class="chips"><span class="chip">EGP ${p.sales}M</span><span class="chip">Share ${p.share.toFixed(1)}</span><span class="chip">${p.growth>0?'+':'−'}${Math.abs(p.growth)}%</span></span></button>`).join('')}</div>`;
+}
+function choiceView(step,idx,list,round){
+ const st=S.q[step.id]||(S.q[step.id]={tries:[],done:false,earned:0});
+ if(!S.order[step.id])S.order[step.id]=shuffle(step.opts.map((_,i)=>i));
+ const order=S.order[step.id];
+ const opts=order.map((oi,pos)=>{
+  const o=step.opts[oi];const tried=st.tries.includes(oi);
+  const cls=st.done&&o.ok?'right':tried?'wrong':'';
+  return `<button type="button" class="opt ${cls}" data-act="pick" data-i="${oi}" ${st.done||tried?'disabled':''}>
+   <span class="l">${L[pos]}</span><span>${esc(o.t)}${tried&&!o.ok?`<span class="fb">${esc(o.fb)}</span>`:''}</span></button>`;
+ }).join('');
+ let foot='';
+ if(st.done){
+  const first=st.tries.length===1,second=st.tries.length===2;
+  foot=`<div class="why"><b>Why:</b> ${esc(step.why)}</div>
+   <div class="row"><span class="earn ${st.earned?'':'zero'}">+${st.earned} pts</span><span class="pts">${first?'First try':second?'Second try, half points':'Third try or later, no points'}</span></div>
+   ${step.own?`<label class="own" for="own">Optional: write your own market-oriented mission in one sentence<textarea id="own" rows="2" maxlength="220">${esc(S.ownMission)}</textarea></label>`:''}
+   <div><button class="btn" type="button" data-act="cont">${idx===list.length-1?(round==='r1'?'On to Round 2':'See the verdict'):'Next question'}</button></div>`;
+ }else if(st.tries.length){
+  foot=`<p class="need">Not quite. Read the note, then pick again for half points.</p>`;
+ }
+ const label=round==='r1'?'Round 1 &middot; Diagnose':'Round 3 &middot; Defend';
+ const prompt=round==='r3'?`<span class="kicker" style="color:var(--coin)">The CEO asks</span>`:'';
+ return `<div class="q-head"><span class="kicker">${label} &middot; ${step.kicker}</span>${dots(0,idx,list)}${prompt}<h2>${esc(step.prompt)}</h2></div>
+  <div class="opts">${opts}</div>${foot}`;
+}
+
+function xOf(s){const t=(Math.log10(s)-Math.log10(.1))/(Math.log10(3)-Math.log10(.1));return 56+(1-t)*560}
+function yOf(g){return 24+(35-g)/50*292}
+function mapSvg(reveal){
+ const gl=[-10,0,10,20,30].map(g=>`<line x1="56" x2="616" y1="${yOf(g)}" y2="${yOf(g)}" stroke="var(--line)" stroke-width="${g===10?2:1}" ${g===10?'':'stroke-dasharray="3 5"'}/><text class="svgtxt" x="48" y="${yOf(g)+5}" text-anchor="end" font-size="14">${g>0?'+':g<0?'−':''}${Math.abs(g)}%</text>`).join('');
+ const sl=[2,1,.5,.2].map(s=>`<line x1="${xOf(s)}" x2="${xOf(s)}" y1="24" y2="316" stroke="var(--line)" stroke-width="${s===1?2:1}" ${s===1?'':'stroke-dasharray="3 5"'}/><text class="svgtxt" x="${xOf(s)}" y="336" text-anchor="middle" font-size="14">${s}</text>`).join('');
+ const q=reveal?`<text class="svgtxt" x="64" y="160" font-size="14">STAR</text><text class="svgtxt" x="610" y="160" font-size="14" text-anchor="end">QUESTION MARK</text><text class="svgtxt" x="64" y="308" font-size="14">CASH COW</text><text class="svgtxt" x="610" y="308" font-size="14" text-anchor="end">DOG</text>`:'';
+ const b=PROD.map(p=>{
+  const x=xOf(p.share),y=yOf(p.growth),r=3.2*Math.sqrt(p.sales),t=S.alloc[p.id];
+  const left=p.id==='fit'||p.id==='wired';
+  const lab=`<text x="${left?x-r-8:x+r+8}" y="${y+5}" font-size="15" font-weight="600" text-anchor="${left?'end':'start'}" fill="var(--ink)" style="font-family:var(--f-body)">${p.short}</text>`;
+  const coin=t>0?`<circle cx="${x+r*.72}" cy="${y-r*.72}" r="11" fill="var(--coin)"/><text x="${x+r*.72}" y="${y-r*.72+5}" text-anchor="middle" font-size="14" font-weight="700" fill="var(--coin-ink)" style="font-family:var(--f-mono)">${t}</text>`:'';
+  return `<circle cx="${x}" cy="${y}" r="${r}" fill="var(--accent)" fill-opacity=".28" stroke="var(--accent)" stroke-width="2"/>${lab}${coin}`;
+ }).join('');
+ return `<svg viewBox="0 0 640 360" role="img" aria-label="Growth-share map of the four Nilo products. Bubble size shows yearly sales.">
+  ${gl}${sl}${q}${b}
+  <text class="svgtxt" x="616" y="354" font-size="13" text-anchor="end">lower share →</text>
+  <text class="svgtxt" x="56" y="354" font-size="13">← higher share (relative market share, log scale)</text>
+  <text class="svgtxt" x="14" y="170" font-size="13" text-anchor="middle" transform="rotate(-90 14 170)">market growth per year</text></svg>`;
+}
+function pips(t){return `<div class="pips" aria-hidden="true">${[1,2,3,4,5].map(i=>`<span class="coin sm ${i<=t?'':'empty'}"></span>`).join('')}</div>`}
+function investView(){
+ const spent=Object.values(S.alloc).reduce((a,b)=>a+b,0),left=10-spent,done=!!S.r2;
+ const missing=[];
+ if(left>0)missing.push(`spend ${left} more token${left>1?'s':''}`);
+ PROD.forEach(p=>{
+  if(!S.cls[p.id])missing.push(`classify ${p.short}`);
+  if(S.alloc[p.id]===0&&!S.zero[p.id])missing.push(`say drop or keep for ${p.short}`);
+  if(S.reason[p.id]===undefined)missing.push(`give a reason for ${p.short}`);
+ });
+ const cards=PROD.map(p=>{
+  if(!S.rorder[p.id])S.rorder[p.id]=shuffle([0,1,2]);
+  const t=S.alloc[p.id];const rs=[p.reasons.ok,...p.reasons.bad];
+  const dis=done?'disabled':'';
+  return `<article class="card pcard">
+   <div><h3>${p.name}</h3><p class="what">${p.what}</p></div>
+   <div class="chips"><span class="chip">EGP ${p.sales}M sales</span><span class="chip">Share ${p.share.toFixed(1)}</span><span class="chip">Growth ${p.growth>0?'+':'−'}${Math.abs(p.growth)}%</span></div>
+   <label class="field" for="cls-${p.id}">Your classification
+    <select id="cls-${p.id}" data-sel="cls" data-p="${p.id}" data-fk="cls-${p.id}" ${dis}><option value="">Choose a quadrant</option>${Object.entries(CLS).map(([k,v])=>`<option value="${k}" ${S.cls[p.id]===k?'selected':''}>${v}</option>`).join('')}</select></label>
+   <div class="field">Tokens (0 to 5)
+    <div class="stepper"><button type="button" data-act="tok" data-p="${p.id}" data-d="-1" data-fk="m-${p.id}" aria-label="Remove a token from ${p.name}" ${dis||t===0?'disabled':''}>&minus;</button><span class="n" aria-live="polite">${t}</span><button type="button" data-act="tok" data-p="${p.id}" data-d="1" data-fk="p-${p.id}" aria-label="Add a token to ${p.name}" ${dis||t===5||left===0?'disabled':''}>+</button>${pips(t)}</div></div>
+   ${t===0?`<label class="field" for="zero-${p.id}">With 0 tokens, would you...
+    <select id="zero-${p.id}" data-sel="zero" data-p="${p.id}" data-fk="zero-${p.id}" ${dis}><option value="">Choose</option><option value="drop" ${S.zero[p.id]==='drop'?'selected':''}>Drop it</option><option value="run" ${S.zero[p.id]==='run'?'selected':''}>Leave it to run on its own</option></select></label>`:''}
+   <label class="field" for="rs-${p.id}">Best one-line reason
+    <select id="rs-${p.id}" data-sel="reason" data-p="${p.id}" data-fk="rs-${p.id}" ${dis}><option value="">Choose a reason</option>${S.rorder[p.id].map(i=>`<option value="${i}" ${S.reason[p.id]===i?'selected':''}>${esc(rs[i])}</option>`).join('')}</select></label>
+  </article>`}).join('');
+ let res='';
+ if(done){
+  const r=S.r2;
+  res=`<section class="card res"><div class="row" style="justify-content:space-between"><h2 style="font-size:20px">Committee feedback</h2><span class="earn">+${r.total} pts</span></div>
+   <p class="pts">Classification ${r.cls}/16 &middot; Token split ${r.alloc}/16 &middot; Reasons ${r.reason}/8</p>
+   ${r.rows.map(x=>`<div class="rp"><b>${x.p.name}</b>
+    <span>${x.cOk?'<span class="ok">Right quadrant.</span>':`<span class="no">Check the quadrant.</span> You said ${x.c?CLS[x.c]:'none'}. It is a ${CLS[x.p.bcg]}.`}</span>
+    <span><b>${x.t} token${x.t===1?'':'s'}:</b> ${esc(x.at)}</span>
+    <span>${x.rOk?'<span class="ok">Strong reason.</span>':`<span class="no">Weaker reason.</span> Strongest: ${esc(x.p.reasons.ok)}`}</span></div>`).join('')}
+   <div><button class="btn" type="button" data-act="cont2">On to Round 3</button></div></section>`;
+ }
+ return `<div class="q-head"><span class="kicker">Round 2 &middot; Invest</span>
+  <h2>Place each product, then spend your 10 tokens.</h2>
+  <p class="lead">Spend all 10 tokens. No product may take more than 5. Bubble size shows yearly sales.</p></div>
+  <section class="card mapcard">${mapSvg(done)}<p class="note">Dividers sit at a relative share of 1.0 and 10% market growth, a common teaching convention. Quadrant names appear after you submit.</p></section>
+  <details class="refresh"><summary>Need a refresher on the growth-share matrix?</summary><dl>
+   <dt>Star</dt><dd>High share, high growth. Invest to keep the lead.</dd>
+   <dt>Cash cow</dt><dd>High share, low growth. Milk it for steady cash.</dd>
+   <dt>Question mark</dt><dd>Low share, high growth. Needs a decision: back it selectively or let go.</dd>
+   <dt>Dog</dt><dd>Low share, low or negative growth. Little reason to invest.</dd></dl></details>
+  <div class="tray" role="status"><div class="coins" aria-hidden="true">${Array.from({length:10},(_,i)=>`<span class="coin ${i<spent?'':'empty'}"></span>`).join('')}</div><b>${left} left</b></div>
+  <div class="grid2">${cards}</div>
+  ${done?'':`<div class="row"><button class="btn" type="button" data-act="submit2" ${missing.length?'disabled':''}>Submit to the committee</button>${missing.length?`<span class="need">Still to do: ${missing.slice(0,3).join(', ')}${missing.length>3?` and ${missing.length-3} more`:''}.</span>`:`<span class="need">Your answers lock once you submit.</span>`}</div>`}
+  ${res}`;
+}
+
+function summaryText(){
+ const r=S.r2,n=total();
+ const lines=[`THE INVESTMENT COMMITTEE (BUS 1410, Marketing Studio 1)`,`Team: ${S.team}`,`Members: ${S.members.replace(/\s*\n\s*/g,', ')||'not listed'}`,`Score: ${n}/100 (${titleFor(n)})`,'',
+  `Round 1 Diagnose: ${sumIds(['cust','created','captured','mtype','mrewrite'])}/40`,`Product analysed: ${S.product?P[S.product].name:'none'}`];
+ if(S.ownMission.trim())lines.push(`Our mission: ${S.ownMission.trim()}`);
+ lines.push('',`Round 2 Invest: ${r.total}/40`);
+ PROD.forEach(p=>lines.push(`- ${p.name}: ${CLS[S.cls[p.id]]||'-'}, ${S.alloc[p.id]} tokens${S.alloc[p.id]===0?` (${S.zero[p.id]==='drop'?'drop':'run on its own'})`:''}`));
+ lines.push('',`Round 3 Defend: ${sumIds(['c1','c2','c3'])}/20`);
+ return lines.join('\n');
+}
+function endView(){
+ const n=total(),r=S.r2;
+ const r1=sumIds(['cust','created','captured','mtype','mrewrite']),r3=sumIds(['c1','c2','c3']);
+ const bd=[
+  ['Customer Whisperer','Best target customer on the first try.',sumIds(['cust'])===10],
+  ['Value Detective','Both value answers right on the first try.',sumIds(['created','captured'])===15],
+  ['Mission Rewriter','Mission classified and rewritten on the first try.',sumIds(['mtype','mrewrite'])===15],
+  ['Map Reader','All four quadrants placed correctly.',r.cls===16],
+  ['Capital Allocator','Token split in the right range for every product.',r.alloc===16],
+  ['Cross-Examination Survivor','Held up under the CEO\'s questions.',r3>=14]];
+ const bar=(l,v,m)=>`<div class="bar"><span>${l}</span><span class="t"><i style="width:${v/m*100}%"></i></span><span>${v}/${m}</span></div>`;
+ return `<section class="hero"><span class="kicker">The CEO's verdict for ${esc(S.team)}</span>
+  <div class="big">${n}<small> / 100</small></div><h1 style="font-size:clamp(22px,4vw,32px)">${titleFor(n)}</h1></section>
+  <section class="card bars">${bar('Diagnose',r1,40)}${bar('Invest',r.total,40)}${bar('Defend',r3,20)}</section>
+  <section class="stage"><h2 style="font-size:20px">Badges</h2><div class="badges">${bd.map(b=>`<div class="badge ${b[2]?'':'off'}"><span class="coin"></span><div><b>${b[0]}</b><span>${b[1]}</span></div></div>`).join('')}</div></section>
+  <section class="card"><h2 style="font-size:20px;margin-bottom:10px">Your recommendation</h2>
+   <div class="tablewrap"><table><thead><tr><th>Product</th><th>Your quadrant</th><th class="num">Tokens</th><th>Correct quadrant</th></tr></thead><tbody>
+   ${PROD.map(p=>`<tr><td>${p.name}</td><td>${CLS[S.cls[p.id]]||'-'}</td><td class="num">${S.alloc[p.id]}</td><td>${CLS[p.bcg]}</td></tr>`).join('')}</tbody></table></div></section>
+  <section class="card stage"><h2 style="font-size:20px">Hand it in</h2><p class="lead">Copy this summary to submit to your instructor.</p>
+   <textarea class="sum" id="sum" readonly>${esc(summaryText())}</textarea>
+   <div class="row"><button class="btn" type="button" data-act="copy">Copy summary</button><span class="need" id="copied" role="status"></span><button class="btn ghost" type="button" data-act="restart">Play again</button></div></section>`;
+}
+
+/* ---------- render ---------- */
+function render(){
+ track();
+ let h='';
+ if(S.screen==='intro')h=introView();
+ else if(S.screen==='r1'||S.screen==='r3'){
+  const list=steps(),step=list[S.i];
+  h=step.type==='pick'?pickView(step,S.i,list):choiceView(step,S.i,list,S.screen);
+ }else if(S.screen==='r2')h=investView();
+ else h=endView();
+ $('#stage').innerHTML=h;
+ if(S.focus){const el=document.querySelector(`[data-fk="${S.focus}"]`);if(el&&!el.disabled)el.focus();S.focus=null}
+}
+function go(screen){S.screen=screen;S.i=0;if(screen==='r3'&&!S.r3)S.r3=1;render();window.scrollTo(0,0)}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-act]');if(!b)return;
+ const a=b.dataset.act;
+ if(a==='start'){e.preventDefault();S.team=($('#team').value.trim())||'Team Nilo';S.members=$('#members').value.trim();go('r1')}
+ else if(a==='product'){S.product=b.dataset.p;S.i++;render();window.scrollTo(0,0)}
+ else if(a==='pick'){
+  const step=steps()[S.i],st=S.q[step.id];if(st.done)return;
+  const i=+b.dataset.i;if(st.tries.includes(i))return;
+  st.tries.push(i);
+  if(step.opts[i].ok){st.done=true;st.earned=st.tries.length===1?step.pts:st.tries.length===2?Math.round(step.pts/2):0}
+  render();
+ }
+ else if(a==='cont'){
+  const own=$('#own');if(own)S.ownMission=own.value;
+  const list=steps();
+  if(S.i<list.length-1){S.i++;render();window.scrollTo(0,0)}
+  else go(S.screen==='r1'?'r2':'end');
+ }
+ else if(a==='tok'){
+  const p=b.dataset.p,d=+b.dataset.d,spent=Object.values(S.alloc).reduce((x,y)=>x+y,0);
+  const n=S.alloc[p]+d;if(n<0||n>5||spent+d>10)return;
+  S.alloc[p]=n;if(n>0)delete S.zero[p];
+  S.focus=(d>0?'p-':'m-')+p;render();
+ }
+ else if(a==='submit2'){S.r2=scoreR2();render();document.querySelector('.res')?.scrollIntoView({behavior:'smooth',block:'start'})}
+ else if(a==='cont2')go('r3');
+ else if(a==='copy'){
+  const ta=$('#sum'),msg=$('#copied');
+  const fallback=()=>{ta.focus();ta.select();msg.textContent='Press Ctrl+C (or Cmd+C) to copy the selected text.'};
+  try{navigator.clipboard.writeText(ta.value).then(()=>{msg.textContent='Copied.'},fallback)}catch(_){fallback()}
+ }
+ else if(a==='restart'){S=fresh();render();window.scrollTo(0,0)}
+ else if(a==='casefile'){$('#case').hidden=false;$('#caseclose').focus()}
+ else if(a==='closecase'){$('#case').hidden=true;$('#casebtn').focus()}
+});
+document.addEventListener('change',e=>{
+ const s=e.target.closest('[data-sel]');if(!s)return;
+ const p=s.dataset.p,k=s.dataset.sel,v=s.value;
+ if(k==='cls'){if(v)S.cls[p]=v;else delete S.cls[p]}
+ else if(k==='zero'){if(v)S.zero[p]=v;else delete S.zero[p]}
+ else if(k==='reason'){if(v!=='')S.reason[p]=+v;else delete S.reason[p]}
+ S.focus=s.dataset.fk;render();
+});
+document.addEventListener('submit',e=>{if(e.target.id==='startform'){e.preventDefault();document.querySelector('[data-act="start"]').click()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#case').hidden){$('#case').hidden=true;$('#casebtn').focus()}});
+$('#case').addEventListener('click',e=>{if(e.target.id==='case'){$('#case').hidden=true}});
+render();
+})();
+</script>
+
+</body>
+</html>
