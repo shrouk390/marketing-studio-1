@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Pixel Pyramid Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Look: a retro game studio's group chat. Sky-blue ground, pixel-notched corners, chunky buttons, gold coins. The whole game is a conversation: three coworkers message you and you answer with taps and small widgets. */
+:root{
+  --bg:#D9EEFF; --surface:#FFFFFF; --ink:#181A3B; --muted:#4A5078; --line:#A9C4E3; --chip:#E8F3FF; --edge:#181A3B;
+  --acc:#D6246E; --acc-ink:#FFFFFF; --coin:#FFC933; --coin-ink:#3A2A00; --out:#FFD84D; --out-ink:#181A3B; --tray:#FFF1B8;
+  --good:#0F7A3F; --good-bg:#D9F5E4; --bad:#C9261A; --bad-bg:#FFE3DF; --scrim:rgba(12,14,44,.62);
+  --hero:#1F2457; --hero-ink:#FFFFFF; --hero-soft:rgba(255,255,255,.82);
+  --p-dalia:#FF6B9A; --p-omar:#3DD6A0; --p-nour:#FFB84D;
+  --c-runner:#0A7FA6; --c-clash:#D6246E; --c-vr:#E08A00; --c-disc:#7C8597;
+  --q-star:rgba(255,201,51,.3); --q-qm:rgba(224,138,0,.16); --q-cow:rgba(10,127,166,.14); --q-dog:rgba(124,133,151,.18);
+  --px:polygon(0 4px,4px 4px,4px 0,calc(100% - 4px) 0,calc(100% - 4px) 4px,100% 4px,100% calc(100% - 4px),calc(100% - 4px) calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 4px),0 calc(100% - 4px));
+  --f-px:'Press Start 2P','Courier New',monospace;
+  --f-body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1430; --surface:#1B2250; --ink:#F1F3FF; --muted:#A9B2E0; --line:#313B7A; --chip:#252E66; --edge:#5C69D6;
+  --acc:#FF6FA3; --acc-ink:#3A0A1E; --coin:#FFD43B; --tray:#2E2A12;
+  --good:#4ADE80; --good-bg:#103021; --bad:#FF7A68; --bad-bg:#3A1714; --scrim:rgba(0,0,0,.7);
+  --hero:#151B4A;
+  --c-runner:#4DD8F2; --c-clash:#FF6FA3; --c-vr:#FFB84D; --c-disc:#A4AECB;
+  --q-star:rgba(255,212,59,.18); --q-qm:rgba(255,184,77,.13); --q-cow:rgba(77,216,242,.13); --q-dog:rgba(164,174,203,.13); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1430; --surface:#1B2250; --ink:#F1F3FF; --muted:#A9B2E0; --line:#313B7A; --chip:#252E66; --edge:#5C69D6;
+  --acc:#FF6FA3; --acc-ink:#3A0A1E; --coin:#FFD43B; --tray:#2E2A12;
+  --good:#4ADE80; --good-bg:#103021; --bad:#FF7A68; --bad-bg:#3A1714; --scrim:rgba(0,0,0,.7);
+  --hero:#151B4A;
+  --c-runner:#4DD8F2; --c-clash:#FF6FA3; --c-vr:#FFB84D; --c-disc:#A4AECB;
+  --q-star:rgba(255,212,59,.18); --q-qm:rgba(255,184,77,.13); --q-cow:rgba(77,216,242,.13); --q-dog:rgba(164,174,203,.13); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.5;padding-inline:16px;padding-block:0 56px}
+.wrap{max-width:760px;margin-inline:auto}
+h1,h2,h3{font-family:var(--f-px);font-weight:400;line-height:1.5;margin:0;text-wrap:balance}
+p{margin:0}
+button,select,textarea,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.px{clip-path:var(--px)}
+
+/* scoreboard */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px 10px;margin-bottom:16px;display:flex;flex-direction:column;gap:8px;border-bottom:3px solid var(--edge)}
+.hud-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.brand{font-family:var(--f-px);font-size:10px;line-height:1.6}
+.hud-right{display:flex;align-items:center;gap:10px}
+.score{font-family:var(--f-px);font-size:16px;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:8px}
+.score::before{content:"";width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--coin) 60%,#fff),var(--coin));box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--coin) 55%,#000)}
+.score small{font-size:9px;color:var(--muted)}
+.prog{display:flex;gap:4px}
+.prog span{flex:1;height:10px;background:var(--chip);border:2px solid var(--line);clip-path:var(--px)}
+.prog span.done{background:var(--acc);border-color:var(--acc)}
+.prog span.on{background:var(--coin);border-color:var(--coin)}
+.progname{font-family:var(--f-px);font-size:9px;color:var(--muted)}
+
+.btn{border:3px solid var(--edge);border-bottom-width:7px;padding:10px 22px 8px;font-family:var(--f-px);font-size:11px;line-height:1.6;cursor:pointer;background:var(--acc);color:var(--acc-ink);clip-path:var(--px)}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{border-bottom-width:3px;transform:translateY(4px)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:none;transform:none;border-bottom-width:7px}
+.btn.ghost{background:var(--surface);color:var(--ink);padding:6px 12px 4px;font-size:9px;border-bottom-width:5px}
+
+.kicker{font-family:var(--f-px);font-size:9px;line-height:1.8;color:var(--acc)}
+.card{background:var(--surface);border:3px solid var(--edge);border-bottom-width:6px;padding:18px;clip-path:var(--px)}
+.lead{color:var(--muted)}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.need{font-size:15px;color:var(--muted)}
+.ok{color:var(--good);font-weight:800}.no{color:var(--bad);font-weight:800}
+
+/* intro */
+.stage{display:flex;flex-direction:column;gap:20px}
+.hero{position:relative;overflow:hidden;background:var(--hero);color:var(--hero-ink);border:3px solid var(--edge);border-bottom-width:7px;padding:26px 22px 24px;display:flex;flex-direction:column;gap:14px;clip-path:var(--px)}
+.hero>*{position:relative;z-index:1}
+.hero .txt{max-width:calc(100% - 96px);display:flex;flex-direction:column;gap:14px}
+.hero h1{font-size:clamp(16px,4.6vw,26px);color:var(--hero-ink)}
+.hero .kicker{color:var(--coin)}
+.hero .lead{color:var(--hero-soft)}
+.pyr{position:absolute;right:16px;bottom:18px;width:84px;display:flex;flex-direction:column;align-items:center;gap:3px;z-index:0}
+.pyr i{display:block;height:10px;background:var(--coin);box-shadow:inset 0 -3px 0 color-mix(in srgb,var(--coin) 65%,#000)}
+.pyr i:nth-child(1){width:14px}.pyr i:nth-child(2){width:32px}.pyr i:nth-child(3){width:50px}.pyr i:nth-child(4){width:68px}.pyr i:nth-child(5){width:84px}
+.pyr::before{content:"";width:14px;height:14px;background:var(--p-dalia);margin-bottom:8px;margin-left:46px}
+.cast{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.cast .card{display:flex;gap:12px;align-items:center;padding:12px}
+.av{width:40px;height:40px;flex:none;display:grid;place-items:center;font-family:var(--f-px);font-size:14px;color:#181A3B;border:3px solid var(--edge);clip-path:var(--px)}
+.cast b{display:block;font-size:16px}.cast span{font-size:14px;color:var(--muted)}
+ul.rules{margin:0;padding-left:20px;color:var(--muted);display:grid;gap:4px}
+.form{display:grid;gap:12px;max-width:560px}
+.form label{display:grid;gap:6px;font-weight:700;font-size:15px}
+.form input,.form textarea{border:3px solid var(--line);background:var(--surface);padding:10px 12px;width:100%;resize:vertical}
+.form input:focus,.form textarea:focus{border-color:var(--acc)}
+
+/* chat */
+.chat{display:flex;flex-direction:column;gap:12px}
+.msg{display:flex;gap:10px;align-items:flex-end;max-width:100%}
+.msg.out{justify-content:flex-end}
+.msg .bub{background:var(--surface);border:3px solid var(--edge);padding:10px 14px;max-width:min(560px,calc(100% - 52px));min-width:0;clip-path:var(--px)}
+.msg.out .bub{background:var(--out);color:var(--out-ink);border-color:var(--edge);max-width:min(560px,92%)}
+.bub .who{display:block;font-family:var(--f-px);font-size:8px;line-height:1.8;color:var(--muted);margin-bottom:4px}
+.bub.wide{width:100%;max-width:calc(100% - 52px)}
+.bub ul{margin:6px 0 0;padding-left:18px;display:grid;gap:3px}
+.bub .li{display:grid;gap:2px;padding:8px 0;border-top:2px solid var(--line)}
+.bub .li:first-of-type{border-top:0;padding-top:4px}
+.sys{align-self:center;font-family:var(--f-px);font-size:9px;line-height:1.8;color:var(--muted);background:var(--chip);padding:6px 12px;text-align:center;clip-path:var(--px)}
+.pill{align-self:center;font-family:var(--f-px);font-size:10px;padding:6px 14px;background:var(--good-bg);color:var(--good);border:2px solid var(--good);clip-path:var(--px)}
+.pill.zero{background:var(--chip);color:var(--muted);border-color:var(--line)}
+.typing .bub{display:flex;gap:5px;padding:14px}
+.typing i{width:8px;height:8px;background:var(--muted);animation:blink 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,60%,100%{opacity:.25}30%{opacity:1}}
+.cardmap svg{width:100%;height:auto;display:block;margin-top:8px}
+
+/* reply panel */
+.panel{margin-top:18px;scroll-margin-top:130px;background:var(--surface);border:3px solid var(--edge);border-bottom-width:7px;padding:16px;display:grid;gap:14px;clip-path:var(--px)}
+.panel>h2{font-size:12px;line-height:1.7}
+.opts{display:grid;gap:10px}
+.opt{display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;text-align:left;background:var(--surface);border:3px solid var(--line);padding:12px;cursor:pointer;align-items:start;clip-path:var(--px)}
+.opt:hover:not([disabled]){border-color:var(--acc)}
+.opt .l{font-family:var(--f-px);font-size:11px;width:34px;height:34px;background:var(--coin);color:var(--coin-ink);display:grid;place-items:center;clip-path:var(--px)}
+.opt .fb{display:block;margin-top:6px;font-size:15px;color:var(--bad)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg);cursor:default}
+.opt.wrong .l{background:var(--bad);color:var(--surface)}
+.opt[disabled]{cursor:default}
+.scards{display:grid;gap:10px}
+.scard{border:3px solid var(--line);padding:12px;display:grid;gap:10px;clip-path:var(--px)}
+.seg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.segb{border:3px solid var(--line);background:var(--surface);padding:8px 10px;cursor:pointer;font-weight:700;font-size:15px;clip-path:var(--px)}
+.segb:hover{border-color:var(--acc)}
+.segb.sel{background:var(--acc);color:var(--acc-ink);border-color:var(--edge)}
+
+/* matrix + invest */
+.mapcard svg{width:100%;height:auto;display:block}
+.svgtxt{font-family:'Nunito',sans-serif;font-weight:700;fill:var(--muted)}
+.note{font-size:14px;color:var(--muted)}
+details.refresh{border:3px solid var(--line);padding:10px 14px}
+details summary{cursor:pointer;font-weight:800}
+details dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:10px 0 0}
+details dt{font-weight:800}details dd{margin:0;color:var(--muted)}
+.pcard{display:flex;flex-direction:column;gap:10px;min-width:0;border:3px solid var(--line);padding:14px;clip-path:var(--px)}
+.pcard h3{font-size:11px;line-height:1.7;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dot{display:inline-block;width:14px;height:14px;flex:none}
+.chip{font-family:var(--f-body);font-size:13px;font-weight:700;background:var(--chip);padding:2px 8px;clip-path:var(--px)}
+.what{color:var(--muted);font-size:15px}
+.facts{display:grid;gap:6px;margin:0}
+.facts div{display:grid;grid-template-columns:130px minmax(0,1fr);gap:8px;font-size:15px}
+.facts dt{color:var(--muted)}
+.facts dd{margin:0;font-variant-numeric:tabular-nums;font-weight:700}
+.facts small{display:block;color:var(--muted);font-size:14px;font-weight:400}
+.field{display:grid;gap:6px;font-size:14px;font-weight:700;color:var(--muted)}
+select{border:3px solid var(--line);background:var(--surface);padding:10px 12px;width:100%;color:var(--ink)}
+select:focus{border-color:var(--acc)}
+.tray{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--tray);border:3px solid var(--edge);padding:10px 14px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 92px);z-index:4;clip-path:var(--px)}
+.coins{display:flex;gap:5px;flex-wrap:wrap}
+.coin{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--coin) 60%,#fff),var(--coin));box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--coin) 55%,#000)}
+.coin.empty{background:transparent;box-shadow:inset 0 0 0 2px var(--line)}
+.coin.sm{width:14px;height:14px}
+.tray b{font-family:var(--f-px);font-size:11px}
+.stepper{display:flex;align-items:center;gap:12px}
+.stepper button{width:44px;height:44px;border:3px solid var(--edge);border-bottom-width:6px;background:var(--surface);font-family:var(--f-px);font-size:16px;cursor:pointer;clip-path:var(--px)}
+.stepper button:hover:not([disabled]){background:var(--coin);color:var(--coin-ink)}
+.stepper button:active:not([disabled]){border-bottom-width:3px;transform:translateY(3px)}
+.stepper button[disabled]{opacity:.3;cursor:not-allowed}
+.stepper .n{font-family:var(--f-px);font-size:22px;min-width:1.3em;text-align:center}
+.pips{display:flex;gap:4px}
+
+/* verdict */
+.big{font-family:var(--f-px);font-size:clamp(40px,14vw,84px);line-height:1;color:var(--coin)}
+.big small{font-size:.22em;color:var(--hero-soft)}
+.bars{display:grid;gap:12px}
+.bar{display:grid;grid-template-columns:100px minmax(0,1fr) 56px;gap:10px;align-items:center;font-size:15px;font-weight:700}
+.bar .t{height:14px;background:var(--chip);border:2px solid var(--line);clip-path:var(--px)}
+.bar .t i{display:block;height:100%;background:var(--acc)}
+.bar span:last-child{text-align:right;font-variant-numeric:tabular-nums;font-size:14px}
+.badges{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.badge{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:center;padding:10px 12px;border:3px solid var(--edge);background:var(--surface);clip-path:var(--px)}
+.badge.off{opacity:.5;border-color:var(--line)}
+.badge .coin{width:28px;height:28px}
+.badge.off .coin{background:transparent;box-shadow:inset 0 0 0 2px var(--line)}
+.badge b{font-size:16px;display:block}.badge span{font-size:14px;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:8px 10px;border-bottom:2px solid var(--line);vertical-align:top}
+th{font-family:var(--f-px);font-size:8px;line-height:1.6;color:var(--muted);font-weight:400}
+td.num,th.num{text-align:right}
+textarea.sum{width:100%;min-height:220px;border:3px solid var(--line);background:var(--surface);padding:12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+
+/* case sheet */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:20;display:grid;place-items:center;padding:16px}
+.sheet{background:var(--surface);border:3px solid var(--edge);border-bottom-width:7px;max-width:800px;width:100%;max-height:calc(100% - 8px);overflow:auto;padding:22px;display:grid;gap:18px;clip-path:var(--px)}
+.sheet h2{font-size:14px;line-height:1.6}.sheet h3{font-size:10px;color:var(--acc);margin-bottom:6px}
+.sheet blockquote{margin:0;padding:4px 0 4px 14px;border-left:5px solid var(--coin)}
+.sheet .quotes{display:grid;gap:10px}
+.sheet ul{margin:0;padding-left:20px;display:grid;gap:4px}
+.sheet .meta{font-size:13px;color:var(--muted)}
+
+@media (max-width:520px){
+  .bar{grid-template-columns:76px minmax(0,1fr) 50px}
+  .facts div{grid-template-columns:1fr;gap:0}
+  .tray{top:calc(env(safe-area-inset-top,0px) + 108px)}
+  .hero .txt{max-width:100%}
+  .pyr{position:static;align-self:flex-end;margin-top:2px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="hud">
+    <div class="hud-row">
+      <span class="brand">Pixel Pyramid chat</span>
+      <div class="hud-right">
+        <span class="score" id="score">0 <small>/100</small></span>
+        <button class="btn ghost" data-act="casefile" id="casebtn" type="button">Case sheet</button>
+      </div>
+    </div>
+    <div class="row" style="gap:10px;flex-wrap:nowrap"><div class="prog" id="prog" style="flex:1"></div><span class="progname" id="progname"></span></div>
+  </header>
+  <main class="stage" id="stage"></main>
+</div>
+
+<div class="scrim" id="case" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="casetitle">
+    <div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div><h2 id="casetitle">Pixel Pyramid Studios</h2>
+      <p class="meta">A made-up company for BUS 1410 &middot; Introduction to Marketing &middot; about 25 minutes</p></div>
+      <button class="btn ghost" data-act="closecase" id="caseclose" type="button">Close</button>
+    </div>
+    <div>
+      <h3>Your role</h3>
+      <p>You are the strategy team at Pixel Pyramid Studios. The CEO has 10 investment tokens to spend on next year's growth and wants your team's plan by the end of the day.</p>
+    </div>
+    <div>
+      <h3>About the company</h3>
+      <p>Pixel Pyramid Studios is a video game company founded in Cairo in 2016. It sells games through app stores, its own website and a few game shops. Most players are students and young adults aged 15 to 30 who play on their phones and with friends.</p>
+      <p style="margin-top:8px"><b>Current mission statement:</b> &ldquo;We make video games.&rdquo;</p>
+    </div>
+    <div>
+      <h3>The games</h3>
+      <p class="note" style="margin-bottom:8px">Relative market share: above 1 means we lead the market; below 1 means a rival is bigger than us.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Game</th><th>What it is</th><th class="num">Yearly sales (EGP million)</th><th>Relative market share</th><th>Market growth per year</th></tr></thead>
+        <tbody>
+          <tr><td>Sphinx Runner</td><td>Endless runner mobile game, our first hit</td><td class="num">60</td><td>2.0 (we sell twice as much as our nearest rival)</td><td>4%</td></tr>
+          <tr><td>Nile Clash</td><td>Online battle game to play with friends</td><td class="num">45</td><td>1.3 (we are the market leader)</td><td>30%</td></tr>
+          <tr><td>Pyramid VR</td><td>Virtual-reality adventure game</td><td class="num">8</td><td>0.2 (the leader sells five times more than us)</td><td>40%</td></tr>
+          <tr><td>Disc Quest</td><td>Games sold on discs in shops</td><td class="num">20</td><td>0.3 (the leader sells over three times more than us)</td><td>&minus;15% (shrinking)</td></tr>
+        </tbody></table></div>
+    </div>
+    <div>
+      <h3>What players say</h3>
+      <div class="quotes">
+        <blockquote>&ldquo;I play Nile Clash every night with my cousins. It feels like we are hanging out, even when we live far apart.&rdquo;</blockquote>
+        <blockquote>&ldquo;Sphinx Runner is my five-minute game on the bus. I have played it for years.&rdquo;</blockquote>
+        <blockquote>&ldquo;VR looks amazing, but I only tried it once. The headset was heavy and the game was short.&rdquo;</blockquote>
+        <blockquote>&ldquo;I buy games online now. Who even has a disc drive anymore?&rdquo;</blockquote>
+      </div>
+    </div>
+    <div>
+      <h3>Rules</h3>
+      <ul>
+        <li>Your reasoning must come from this sheet and your own judgement.</li>
+        <li>Your instructor may call on any member of your group to defend your answers, so make sure everyone understands them.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const FAST=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const L='ABCD';
+const CLS={star:'Star',cow:'Cash cow',qm:'Question mark',dog:'Dog'};
+const STAGES=['Value','Mission','Matrix','Money','Wrap-up'];
+const CAST={dalia:{n:'Dalia',role:'CEO',c:'var(--p-dalia)'},omar:{n:'Omar',role:'Finance',c:'var(--p-omar)'},nour:{n:'Nour',role:'Marketing intern',c:'var(--p-nour)'}};
+
+/* ---------- data (from the case sheet) ---------- */
+const PROD=[
+ {id:'runner',name:'Sphinx Runner',what:'Endless runner mobile game, our first hit',sales:60,share:2.0,growth:4,col:'var(--c-runner)',
+  shareNote:'We sell twice as much as our nearest rival',growthTxt:'+4% a year',bcg:'cow',
+  bcgWhy:'High share (2.0) in a slow market (4% growth).',
+  alloc:(t,z)=>t===0?(z==='run'?[5,'Good call. Sphinx Runner already earns EGP 60 million without help.']:[0,'Dropping your biggest seller would cut the cash that pays for growth.']):t<=2?[5,'Good. A small top-up protects a steady seller in a market growing only 4%.']:t===3?[3,'A bit high. Slow growth means extra tokens add little.']:[0,'Too many. In a market growing 4%, extra tokens add little. This game should make cash, not use it.']},
+ {id:'clash',name:'Nile Clash',what:'Online battle game to play with friends',sales:45,share:1.3,growth:30,col:'var(--c-clash)',
+  shareNote:'We are the market leader',growthTxt:'+30% a year',bcg:'star',
+  bcgWhy:'Market leader (1.3) in a fast-growing market (30% growth).',
+  alloc:t=>t>=4?[5,'Good. Nile Clash leads a market growing 30% a year, so tokens work hard here.']:t===3?[3,'OK, but a leader in a fast-growing market deserves more.']:[0,'Too few. Nile Clash is the best chance to grow and keep the lead.']},
+ {id:'vr',name:'Pyramid VR',what:'Virtual-reality adventure game',sales:8,share:0.2,growth:40,col:'var(--c-vr)',
+  shareNote:'The leader sells five times more than us',growthTxt:'+40% a year',bcg:'qm',
+  bcgWhy:'Small share (0.2) in a very fast-growing market (40% growth).',
+  alloc:t=>(t>=2&&t<=4)?[5,'Good. VR grows 40% a year, but our share is only 0.2 and players say the game needs to be better. Spend carefully.']:t===5?[3,'Risky. Pyramid VR is not winning yet, so keep some tokens for other games.']:t===1?[3,'Very small. The market is growing fast, so one token may not change much.']:[0,'Zero ignores a market growing 40% a year. Test it first.']},
+ {id:'disc',name:'Disc Quest',what:'Games sold on discs in shops',sales:20,share:0.3,growth:-15,col:'var(--c-disc)',
+  shareNote:'The leader sells over three times more than us',growthTxt:'−15% a year (shrinking)',bcg:'dog',
+  bcgWhy:'Small share (0.3) in a shrinking market (−15% growth).',
+  alloc:(t,z)=>t<=1?[5,t===0?(z==='drop'?'Reasonable. Disc sales are shrinking 15% a year.':'Reasonable. Discs still bring in EGP 20 million without new tokens.'):'Reasonable. One token keeps the remaining sales.']:t===2?[3,'More than needed for a shrinking market.']:[0,'These tokens are unlikely to pay back in a shrinking market.']}
+];
+
+const PO=()=>S.porder.map(i=>PROD[i]);
+
+/* ---------- the script (the whole game is this list) ---------- */
+const SCRIPT=[
+ {t:'sys',text:'Pixel Pyramid strategy chat · 9:02',stage:0},
+ {t:'msg',from:'dalia',text:'Morning, team! I have 10 investment tokens to spend on next year\'s growth. I need your plan by the end of the day.'},
+ {t:'msg',from:'dalia',text:'First, our players. Nour, who are they?'},
+ {t:'msg',from:'nour',text:'I read all the player quotes. They are in the Case sheet at the top. Strategy team, which description fits our target customer best?'},
+ {t:'choice',id:'cust',from:'nour',max:10,pts:10,
+  opts:[
+   {t:'Families who want games the whole household can enjoy together.',fb:'The players in the case sheet are young adults who play with friends.'},
+   {t:'Students and young adults aged 15 to 30 who want fun and time with friends.',ok:1},
+   {t:'Adults aged 30 to 50 who play now and then at the weekend.',fb:'The case sheet says most players are aged 15 to 30.'},
+   {t:'Competitive players who join tournaments to win prizes.',fb:'Nothing in the case sheet mentions prizes or tournaments.'}],
+  why:'A good answer says who the customers are (age, life stage) and what they want. Here: students and young adults, 15 to 30, who want fun and time with friends.'},
+ {t:'msg',from:'dalia',text:'Great. Now let\'s look at Nile Clash, our online battle game. Who gets what from it?'},
+ {t:'msg',from:'nour',text:'I wrote 5 sticky notes. Value created is what players get. Value captured is what we get. Can you sort them?'},
+ {t:'sort',id:'vsort',from:'nour',per:3,max:15,
+  title:'Nile Clash: who gets this?',
+  labels:[['created','Value created'],['captured','Value captured']],
+  cards:[
+   {t:'Players hang out with friends online.',a:'created',why:'A benefit the players get.'},
+   {t:'EGP 45 million in yearly sales.',a:'captured',why:'Money the studio earns.'},
+   {t:'Players have fun every night.',a:'created',why:'A benefit the players get.'},
+   {t:'A leading share of the market (1.3).',a:'captured',why:'The studio\'s position in the market.'},
+   {t:'Players can play from their phone.',a:'created',why:'A benefit the players get.'}]},
+ {t:'sys',text:'Round 2 · Mission',stage:1},
+ {t:'msg',from:'dalia',text:'Next, our mission statement. Right now it says: "We make video games."'},
+ {t:'msg',from:'omar',text:'Sounds fine to me. We do make games!'},
+ {t:'msg',from:'nour',text:'Let\'s check some missions first. Product-oriented means it talks about what we make. Market-oriented means it talks about what the player needs. Which is which?'},
+ {t:'sort',id:'msort',from:'nour',per:3,max:9,
+  title:'Which kind of mission?',
+  labels:[['product','Product-oriented'],['market','Market-oriented']],
+  cards:[
+   {t:'We make video games.',a:'product',why:'It names what the company makes.'},
+   {t:'We bring friends together through play.',a:'market',why:'It names what the player needs.'},
+   {t:'We build the best mobile games in Africa.',a:'product',why:'Still about the product.'}]},
+ {t:'msg',from:'dalia',text:'So our mission is product-oriented. Which new mission is a market-oriented version?'},
+ {t:'choice',id:'mrewrite',from:'nour',max:16,pts:16,
+  opts:[
+   {t:'We create the most popular phone and VR games in Egypt.',fb:'Still about products. It only talks about what we make.'},
+   {t:'We give young people fun ways to play and connect with friends.',ok:1},
+   {t:'We want to become the biggest game studio in Africa by 2030.',fb:'That is a size goal. It does not mention the player.'},
+   {t:'We build and sell games for phones, consoles and discs.',fb:'Still about products, just a longer list.'}],
+  why:'A market-oriented mission starts with the player\'s need: fun and time with friends.'},
+ {t:'sys',text:'Round 3 · BCG matrix',stage:2},
+ {t:'msg',from:'omar',text:'Okay, money time. Here are our four games. Which quadrant of the BCG matrix does each one belong in?'},
+ {t:'bcg',id:'bcg',from:'omar',max:20},
+ {t:'sys',text:'Round 4 · The 10 tokens',stage:3},
+ {t:'msg',from:'dalia',text:'Now the big decision. Spend all 10 tokens, with a maximum of 5 on one game. If a game gets 0, tell me: do we drop it, or leave it to run on its own?'},
+ {t:'tokens',id:'inv',from:'omar',max:20},
+ {t:'sys',text:'Last question',stage:4},
+ {t:'msg',from:'dalia',text:'One last thing before I walk into the board meeting.'},
+ {t:'choice',id:'final',from:'omar',max:10,pts:10,
+  opts:[
+   {t:'Nile Clash. It leads a market that is growing fast (a Star).',ok:1},
+   {t:'Sphinx Runner. It sells the most and players love it.',fb:'It sells the most, but its market grows only 4%. It is a Cash cow, so extra tokens add little.'},
+   {t:'Disc Quest. It still earns EGP 20 million and could recover.',fb:'Its market shrinks 15% a year. It is a Dog.'}],
+  prompt:'If I find 1 extra token, which game should get it?',
+  why:'Stars are the best place for extra tokens: the market is growing and the game already leads.'},
+ {t:'msg',from:'dalia',text:'Thanks, team! I will send my review now.'},
+ {t:'end'}
+];
+
+/* ---------- state ---------- */
+let S;
+function fresh(){return{porder:shuffle([0,1,2,3]),lastPos:-1,screen:'intro',team:'',members:'',log:[],pos:0,pending:null,typing:null,stage:0,run:0,
+  q:{},sort:{},order:{},cls:{},alloc:{runner:0,clash:0,vr:0,disc:0},zero:{},bcg:null,inv:null,focus:null,scroll:null}}
+S=fresh();
+
+/* ---------- scoring ---------- */
+function e(id){return (S.q[id]&&S.q[id].earned)||(S.sort[id]&&S.sort[id].earned)||0}
+function total(){let s=0;for(const k in S.q)s+=S.q[k].earned||0;for(const k in S.sort)s+=S.sort[k].earned||0;if(S.bcg)s+=S.bcg.total;if(S.inv)s+=S.inv.total;return s}
+function parts(){return[e('cust')+e('vsort'),e('msort')+e('mrewrite'),S.bcg?S.bcg.total:0,S.inv?S.inv.total:0,e('final')]}
+const MAXES=[25,25,20,20,10];
+function titleFor(n){return n>=90?'Studio Legend':n>=75?'Lead Strategist':n>=55?'Rising Producer':'Intern with Potential'}
+function reviewFor(n){return n>=90?'This is exactly the plan I wanted. You read the evidence like a pro.':n>=75?'Strong plan. A few details to polish, but I am happy to take this to the board.':n>=55?'A decent start. Look again at the games you misplaced and check why.':'We have work to do. Reread the case sheet and the BCG matrix, then try again.'}
+
+/* ---------- chart ---------- */
+function xOf(s){const t=(Math.log10(s)-Math.log10(.1))/(Math.log10(3)-Math.log10(.1));return 56+(1-t)*560}
+function yOf(g){return 24+(45-g)/65*292}
+function mapSvg(reveal){
+ const gl=[-10,0,10,20,30,40].map(g=>`<line x1="56" x2="616" y1="${yOf(g)}" y2="${yOf(g)}" stroke="var(--line)" stroke-width="${g===10?2:1}" ${g===10?'':'stroke-dasharray="3 5"'}/><text class="svgtxt" x="48" y="${yOf(g)+5}" text-anchor="end" font-size="14">${g>0?'+':g<0?'−':''}${Math.abs(g)}%</text>`).join('');
+ const sl=[2,1,.5,.2].map(s=>`<line x1="${xOf(s)}" x2="${xOf(s)}" y1="24" y2="316" stroke="var(--line)" stroke-width="${s===1?2:1}" ${s===1?'':'stroke-dasharray="3 5"'}/><text class="svgtxt" x="${xOf(s)}" y="336" text-anchor="middle" font-size="14">${s}</text>`).join('');
+ const x1=xOf(1),y1=yOf(10);
+ const qr=`<rect x="56" y="24" width="${x1-56}" height="${y1-24}" fill="var(--q-star)"/><rect x="${x1}" y="24" width="${616-x1}" height="${y1-24}" fill="var(--q-qm)"/><rect x="56" y="${y1}" width="${x1-56}" height="${316-y1}" fill="var(--q-cow)"/><rect x="${x1}" y="${y1}" width="${616-x1}" height="${316-y1}" fill="var(--q-dog)"/>`;
+ const q=reveal?`<text class="svgtxt" x="64" y="${y1-8}" font-size="14">STAR</text><text class="svgtxt" x="610" y="${y1-8}" font-size="14" text-anchor="end">QUESTION MARK</text><text class="svgtxt" x="64" y="308" font-size="14">CASH COW</text><text class="svgtxt" x="610" y="308" font-size="14" text-anchor="end">DOG</text>`:'';
+ const b=PROD.map(p=>{
+  const x=xOf(p.share),y=yOf(p.growth),r=3.2*Math.sqrt(p.sales),t=S.alloc[p.id];
+  const left=p.id==='vr'||p.id==='disc';
+  const lab=`<text x="${left?x-r-8:x+r+8}" y="${y+5}" font-size="15" font-weight="800" text-anchor="${left?'end':'start'}" fill="var(--ink)" style="font-family:'Nunito',sans-serif">${p.name}</text>`;
+  const coin=t>0?`<circle cx="${x+r*.72}" cy="${y-r*.72}" r="11" fill="var(--coin)"/><text x="${x+r*.72}" y="${y-r*.72+5}" text-anchor="middle" font-size="14" font-weight="800" fill="var(--coin-ink)" style="font-family:'Nunito',sans-serif">${t}</text>`:'';
+  return `<circle cx="${x}" cy="${y}" r="${r}" fill="${p.col}" fill-opacity=".4" stroke="${p.col}" stroke-width="3"/>${lab}${coin}`;
+ }).join('');
+ return `<svg viewBox="0 0 640 360" role="img" aria-label="BCG matrix of the four Pixel Pyramid games. Bubble size shows yearly sales.">
+  ${qr}${gl}${sl}${q}${b}
+  <text class="svgtxt" x="616" y="354" font-size="13" text-anchor="end">lower share →</text>
+  <text class="svgtxt" x="56" y="354" font-size="13">← higher relative market share</text>
+  <text class="svgtxt" x="14" y="170" font-size="13" text-anchor="middle" transform="rotate(-90 14 170)">market growth per year</text></svg>`;
+}
+
+/* ---------- views ---------- */
+function track(){
+ $('#prog').innerHTML=STAGES.map((n,i)=>`<span class="${S.screen==='end'||i<S.stage?'done':i===S.stage&&S.screen==='chat'?'on':''}"></span>`).join('');
+ $('#progname').textContent=S.screen==='intro'?'Start':S.screen==='end'?'Review':STAGES[S.stage];
+ $('#score').innerHTML=`${total()} <small>/100</small>`;
+}
+function av(k){const c=CAST[k];return `<span class="av" style="background:${c.c}" aria-hidden="true">${c.n[0]}</span>`}
+function item(it){
+ if(it.k==='in')return `<div class="msg in">${av(it.from)}<div class="bub"><span class="who">${CAST[it.from].n.toUpperCase()} · ${CAST[it.from].role.toUpperCase()}</span>${it.html}</div></div>`;
+ if(it.k==='card')return `<div class="msg in">${av(it.from)}<div class="bub wide"><span class="who">${CAST[it.from].n.toUpperCase()} · ${CAST[it.from].role.toUpperCase()}</span>${it.html}</div></div>`;
+ if(it.k==='out')return `<div class="msg out"><div class="bub">${it.html}</div></div>`;
+ if(it.k==='sys')return `<div class="sys">${esc(it.text)}</div>`;
+ if(it.k==='pts')return `<div class="pill ${it.n?'':'zero'}">+${it.n} of ${it.max} pts</div>`;
+ return '';
+}
+function introView(){
+ return `<section class="hero"><div class="txt"><span class="kicker">BUS 1410 · Introduction to Marketing</span>
+  <h1>Pixel Pyramid Studios</h1>
+  <p class="lead">You are the strategy team at a game studio in Cairo. It is 9 a.m. and your three coworkers are already messaging you. Answer their questions to build the studio's plan. This game takes about 25 minutes.</p></div>
+  <div class="pyr" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></section>
+  <div class="cast">${Object.keys(CAST).map(k=>`<div class="card">${av(k)}<div><b>${CAST[k].n}</b><span>${CAST[k].role}</span></div></div>`).join('')}</div>
+  <ul class="rules">
+   <li>The chat covers four things: your customer and value, the mission, the BCG matrix, and the 10 tokens.</li>
+   <li>Open the Case sheet (button at the top) any time for the facts.</li>
+   <li>In multiple-choice questions, a wrong answer lets you try again for half the points.</li>
+   <li>Play as a group on one screen. Everyone should be able to explain the answers.</li>
+  </ul>
+  <form class="form" id="startform">
+   <label for="team">Team name<input id="team" type="text" placeholder="Team Pyramid" maxlength="40" autocomplete="off"></label>
+   <label for="members">Group members<textarea id="members" rows="2" placeholder="One name per line, or separated by commas"></textarea></label>
+   <div><button class="btn" type="submit" data-act="start">Open the chat</button></div>
+  </form>`;
+}
+function choicePanel(n){
+ const st=S.q[n.id]||(S.q[n.id]={tries:[],done:false,earned:0});
+ if(!S.order[n.id]){let o,k=0;do{o=shuffle(n.opts.map((_,i)=>i));k++}while(k<12&&o.findIndex(i=>n.opts[i].ok)===S.lastPos);S.order[n.id]=o;S.lastPos=o.findIndex(i=>n.opts[i].ok)}
+ const opts=S.order[n.id].map((oi,pos)=>{
+  const o=n.opts[oi],tried=st.tries.includes(oi);
+  return `<button type="button" class="opt ${tried?'wrong':''}" data-act="pick" data-i="${oi}" ${tried?'disabled':''}><span class="l">${L[pos]}</span><span>${esc(o.t)}${tried&&!o.ok?`<span class="fb">${esc(o.fb)}</span>`:''}</span></button>`}).join('');
+ return `<section class="panel" id="panel">${n.prompt?`<h2>${esc(n.prompt)}</h2>`:''}<div class="opts">${opts}</div>${st.tries.length?`<p class="need">Not quite. Read the note, then try again for half points.</p>`:''}</section>`;
+}
+function sortPanel(n){
+ const st=S.sort[n.id]||(S.sort[n.id]={picks:{},earned:0});
+ if(!S.order[n.id])S.order[n.id]=shuffle(n.cards.map((_,i)=>i));
+ const all=n.cards.every((_,i)=>st.picks[i]);
+ return `<section class="panel" id="panel"><h2>${esc(n.title)}</h2>
+  <div class="scards">${S.order[n.id].map(ci=>{const c=n.cards[ci];return `<div class="scard"><p>${esc(c.t)}</p><div class="seg">${n.labels.map(([k,l])=>`<button type="button" class="segb ${st.picks[ci]===k?'sel':''}" data-act="spick" data-c="${ci}" data-k="${k}" data-fk="s${ci}-${k}" aria-pressed="${st.picks[ci]===k}">${l}</button>`).join('')}</div></div>`}).join('')}</div>
+  <div class="row"><button class="btn" type="button" data-act="ssend" ${all?'':'disabled'}>Send</button>${all?'':`<span class="need">Sort every card first.</span>`}</div></section>`;
+}
+function facts(p){return `<dl class="facts"><div><dt>Yearly sales</dt><dd>EGP ${p.sales} million</dd></div><div><dt>Relative market share</dt><dd>${p.share}<small>${p.shareNote}</small></dd></div><div><dt>Market growth</dt><dd>${p.growthTxt}</dd></div></dl>`}
+const REFRESH=`<details class="refresh"><summary>Need a reminder about the BCG matrix?</summary><dl>
+ <dt>Star</dt><dd>High share, high growth. Invest to keep the lead.</dd>
+ <dt>Cash cow</dt><dd>High share, low growth. Keep it going and collect the cash.</dd>
+ <dt>Question mark</dt><dd>Low share, high growth. Decide: invest carefully or let go.</dd>
+ <dt>Dog</dt><dd>Low share, low or falling growth. Little reason to invest.</dd></dl></details>`;
+function bcgPanel(){
+ const left=PROD.filter(p=>!S.cls[p.id]).length;
+ return `<section class="panel" id="panel"><h2>Place each game</h2>
+  <div class="mapcard">${mapSvg(false)}<p class="note">Bubble size shows yearly sales. The lines mark a relative market share of 1.0 and market growth of 10%.</p></div>
+  ${REFRESH}
+  ${PO().map(p=>`<div class="pcard"><div><h3><i class="dot" style="background:${p.col}"></i>${p.name}</h3><p class="what">${p.what}</p></div>${facts(p)}
+   <div class="seg">${Object.entries(CLS).map(([k,v])=>`<button type="button" class="segb ${S.cls[p.id]===k?'sel':''}" data-act="cpick" data-p="${p.id}" data-k="${k}" data-fk="b-${p.id}-${k}" aria-pressed="${S.cls[p.id]===k}">${v}</button>`).join('')}</div></div>`).join('')}
+  <div class="row"><button class="btn" type="button" data-act="bsend" ${left?'disabled':''}>Send</button>${left?`<span class="need">${left} game${left>1?'s':''} still to place.</span>`:`<span class="need">You cannot change your answers after you send.</span>`}</div></section>`;
+}
+function pips(t){return `<div class="pips" aria-hidden="true">${[1,2,3,4,5].map(i=>`<span class="coin sm ${i<=t?'':'empty'}"></span>`).join('')}</div>`}
+function tokensPanel(){
+ const spent=Object.values(S.alloc).reduce((a,b)=>a+b,0),left=10-spent;
+ const missing=[];
+ if(left>0)missing.push(`spend ${left} more token${left>1?'s':''}`);
+ PROD.forEach(p=>{if(S.alloc[p.id]===0&&!S.zero[p.id])missing.push(`choose drop or keep for ${p.name}`)});
+ return `<section class="panel" id="panel"><h2>Spend the 10 tokens</h2>
+  <div class="mapcard">${mapSvg(true)}</div>
+  <div class="tray" role="status"><div class="coins" aria-hidden="true">${Array.from({length:10},(_,i)=>`<span class="coin ${i<spent?'':'empty'}"></span>`).join('')}</div><b>${left} left</b></div>
+  ${PO().map(p=>{const t=S.alloc[p.id];return `<div class="pcard"><div><h3><i class="dot" style="background:${p.col}"></i>${p.name} <span class="chip">${CLS[p.bcg]}</span></h3><p class="what">${p.what}</p></div>${facts(p)}
+   <div class="field">Tokens (0 to 5)<div class="stepper"><button type="button" data-act="tok" data-p="${p.id}" data-d="-1" data-fk="m-${p.id}" aria-label="Remove a token from ${p.name}" ${t===0?'disabled':''}>&minus;</button><span class="n" aria-live="polite">${t}</span><button type="button" data-act="tok" data-p="${p.id}" data-d="1" data-fk="p-${p.id}" aria-label="Add a token to ${p.name}" ${t===5||left===0?'disabled':''}>+</button>${pips(t)}</div></div>
+   ${t===0?`<label class="field" for="zero-${p.id}">With 0 tokens, would you drop it or leave it to run on its own?<select id="zero-${p.id}" data-sel="zero" data-p="${p.id}" data-fk="zero-${p.id}"><option value="">Choose</option><option value="drop" ${S.zero[p.id]==='drop'?'selected':''}>Drop it</option><option value="run" ${S.zero[p.id]==='run'?'selected':''}>Leave it to run on its own</option></select></label>`:''}</div>`}).join('')}
+  <div class="row"><button class="btn" type="button" data-act="tsend" ${missing.length?'disabled':''}>Send</button>${missing.length?`<span class="need">Still to do: ${missing.slice(0,3).join(', ')}${missing.length>3?` and ${missing.length-3} more`:''}.</span>`:`<span class="need">You cannot change your split after you send.</span>`}</div></section>`;
+}
+function panel(n){return n.t==='choice'?choicePanel(n):n.t==='sort'?sortPanel(n):n.t==='bcg'?bcgPanel():tokensPanel()}
+function chatView(){
+ const typing=S.typing?`<div class="msg in typing">${av(S.typing)}<div class="bub" aria-label="${CAST[S.typing].n} is typing"><i></i><i></i><i></i></div></div>`:'';
+ return `<div class="chat" role="log" aria-live="polite">${S.log.map(item).join('')}${typing}</div>${S.pending?panel(S.pending):''}`;
+}
+function summaryText(){
+ const n=total(),p=parts();
+ const lines=['PIXEL PYRAMID STUDIOS (BUS 1410)',`Team: ${S.team}`,`Members: ${S.members.replace(/\s*\n\s*/g,', ')||'not listed'}`,`Score: ${n}/100 (${titleFor(n)})`,''];
+ STAGES.forEach((s,i)=>lines.push(`${s}: ${p[i]}/${MAXES[i]}`));
+ lines.push('','Our recommendation:');
+ PROD.forEach(g=>lines.push(`- ${g.name}: ${CLS[S.cls[g.id]]||'-'}, ${S.alloc[g.id]} tokens${S.alloc[g.id]===0?` (${S.zero[g.id]==='drop'?'drop':'run on its own'})`:''}`));
+ return lines.join('\n');
+}
+function endView(){
+ const n=total(),p=parts();
+ const bd=[['Player Expert','Picked the right target customer on the first try.',e('cust')===10],['Value Sorter','Sorted all five sticky notes correctly.',e('vsort')===15],['Mission Maker','Got every mission question right.',e('msort')+e('mrewrite')===25],['BCG Expert','Placed all four games in the right quadrant.',p[2]===20],['Smart Investor','Split the tokens well across all four games.',p[3]===20]];
+ const bar=(l,v,m)=>`<div class="bar"><span>${l}</span><span class="t"><i style="width:${v/m*100}%"></i></span><span>${v}/${m}</span></div>`;
+ return `<section class="hero"><div class="txt"><span class="kicker">Dalia's review for ${esc(S.team)}</span>
+  <div class="big">${n}<small>/100</small></div><h1>${titleFor(n)}</h1>
+  <p class="lead">&ldquo;${esc(reviewFor(n))}&rdquo;</p></div><div class="pyr" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></section>
+  <section class="card bars">${STAGES.map((s,i)=>bar(s,p[i],MAXES[i])).join('')}</section>
+  <section class="stage"><h2 style="font-size:13px">Badges</h2><div class="badges">${bd.map(b=>`<div class="badge ${b[2]?'':'off'}"><span class="coin"></span><div><b>${b[0]}</b><span>${b[1]}</span></div></div>`).join('')}</div></section>
+  <section class="card"><h2 style="font-size:13px;margin-bottom:10px">Your recommendation</h2>
+   <div class="tablewrap"><table><thead><tr><th>Game</th><th>Your quadrant</th><th class="num">Tokens</th><th>Correct quadrant</th></tr></thead><tbody>
+   ${PROD.map(g=>`<tr><td>${g.name}</td><td>${CLS[S.cls[g.id]]||'-'}</td><td class="num">${S.alloc[g.id]}</td><td>${CLS[g.bcg]}</td></tr>`).join('')}</tbody></table></div></section>
+  <section class="card stage"><h2 style="font-size:13px">Submit your work</h2><p class="lead">Copy this summary and send it to your instructor.</p>
+   <textarea class="sum" id="sum" readonly>${esc(summaryText())}</textarea>
+   <div class="row"><button class="btn" type="button" data-act="copy">Copy summary</button><span class="need" id="copied" role="status"></span><button class="btn ghost" type="button" data-act="restart">Play again</button></div></section>`;
+}
+
+/* ---------- engine ---------- */
+function render(){
+ track();
+ $('#stage').innerHTML=S.screen==='intro'?introView():S.screen==='chat'?chatView():endView();
+ if(S.focus){const el=document.querySelector(`[data-fk="${S.focus}"]`);if(el&&!el.disabled)el.focus({preventScroll:true});S.focus=null}
+ if(S.scroll==='bottom')window.scrollTo(0,document.documentElement.scrollHeight);
+ else if(S.scroll==='panel'){const p=$('#panel');if(p)p.scrollIntoView({block:'start'})}
+ else if(S.scroll==='top')window.scrollTo(0,0);
+ S.scroll=null;
+}
+async function advance(){
+ const run=S.run;
+ while(S.pos<SCRIPT.length){
+  const n=SCRIPT[S.pos];
+  if(n.t==='msg'){
+   S.typing=n.from;S.scroll='bottom';render();
+   await sleep(FAST?0:Math.min(650,250+n.text.length*5));
+   if(S.run!==run)return;
+   S.typing=null;S.log.push({k:'in',from:n.from,html:esc(n.text)});S.pos++;S.scroll='bottom';render();
+  }else if(n.t==='sys'){
+   S.stage=n.stage;S.log.push({k:'sys',text:n.text});S.pos++;
+  }else if(n.t==='end'){
+   S.screen='end';S.scroll='top';render();return;
+  }else{
+   S.pending=n;S.scroll=n.t==='choice'?'bottom':'panel';render();return;
+  }
+ }
+}
+function finish(n,outHtml,card,earned){
+ S.log.push({k:'out',html:outHtml});
+ if(card)S.log.push({k:'card',from:n.from,html:card});
+ S.log.push({k:'pts',n:earned,max:n.max});
+ S.pending=null;S.pos++;S.scroll='bottom';render();advance();
+}
+const li=(ok,t,why)=>`<div class="li"><span><span class="${ok?'ok':'no'}">${ok?'Right.':'Not quite.'}</span> ${t}</span><span class="note">${why}</span></div>`;
+
+document.addEventListener('click',ev=>{
+ const b=ev.target.closest('[data-act]');if(!b)return;
+ const a=b.dataset.act,n=S.pending;
+ if(a==='start'){ev.preventDefault();S=fresh();S.team=($('#team')?.value.trim())||'Team Pyramid';S.members=$('#members')?.value.trim()||'';S.screen='chat';S.run=Date.now();S.scroll='top';render();advance()}
+ else if(a==='pick'){
+  const st=S.q[n.id],i=+b.dataset.i;if(st.tries.includes(i))return;
+  st.tries.push(i);
+  if(n.opts[i].ok){
+   st.done=true;st.earned=st.tries.length===1?n.pts:st.tries.length===2?Math.round(n.pts/2):0;
+   finish(n,esc(n.opts[i].t),`<p>${esc(n.why)}</p>`,st.earned);
+  }else render();
+ }
+ else if(a==='spick'){S.sort[n.id].picks[+b.dataset.c]=b.dataset.k;S.focus=b.dataset.fk;render()}
+ else if(a==='ssend'){
+  const st=S.sort[n.id];
+  st.earned=n.cards.reduce((t,c,i)=>t+(st.picks[i]===c.a?n.per:0),0);
+  const right=n.cards.filter((c,i)=>st.picks[i]===c.a).length;
+  const lab=Object.fromEntries(n.labels);
+  const ord=S.order[n.id];
+  const out=`<b>Our answers</b><ul>${ord.map(i=>`<li>${esc(n.cards[i].t)} → ${lab[st.picks[i]]}</li>`).join('')}</ul>`;
+  const card=`<p><b>${right} of ${n.cards.length} right.</b></p>${ord.map(i=>li(st.picks[i]===n.cards[i].a,esc(n.cards[i].t),esc(n.cards[i].why))).join('')}`;
+  finish(n,out,card,st.earned);
+ }
+ else if(a==='cpick'){S.cls[b.dataset.p]=b.dataset.k;S.focus=b.dataset.fk;render()}
+ else if(a==='bsend'){
+  let t=0;const rows=PO().map(p=>{const ok=S.cls[p.id]===p.bcg;if(ok)t+=5;return{p,ok}});
+  S.bcg={total:t,rows};
+  const out=`<b>Our matrix</b><ul>${PO().map(p=>`<li>${p.name}: ${CLS[S.cls[p.id]]}</li>`).join('')}</ul>`;
+  const card=`<p><b>${rows.filter(r=>r.ok).length} of 4 right.</b></p>${rows.map(r=>li(r.ok,`${r.p.name}: ${CLS[r.p.bcg]}.`,esc(r.p.bcgWhy))).join('')}<div class="cardmap">${mapSvg(true)}</div>`;
+  finish(n,out,card,t);
+ }
+ else if(a==='tok'){
+  const p=b.dataset.p,d=+b.dataset.d,spent=Object.values(S.alloc).reduce((x,y)=>x+y,0),v=S.alloc[p]+d;
+  if(v<0||v>5||spent+d>10)return;
+  S.alloc[p]=v;if(v>0)delete S.zero[p];S.focus=(d>0?'p-':'m-')+p;render();
+ }
+ else if(a==='tsend'){
+  let t=0;const rows=PO().map(p=>{const k=S.alloc[p.id],[ap,at]=p.alloc(k,S.zero[p.id]);t+=ap;return{p,k,ap,at}});
+  S.inv={total:t,rows};
+  const out=`<b>Our split</b><ul>${rows.map(r=>`<li>${r.p.name}: ${r.k} token${r.k===1?'':'s'}${r.k===0?` (${S.zero[r.p.id]==='drop'?'drop':'run on its own'})`:''}</li>`).join('')}</ul>`;
+  const card=rows.map(r=>`<div class="li"><span><b>${r.p.name}: ${r.k} token${r.k===1?'':'s'}</b> <span class="${r.ap===5?'ok':r.ap?'':'no'}">${r.ap===5?'Strong.':r.ap?'Okay.':'Weak.'}</span></span><span class="note">${esc(r.at)}</span></div>`).join('');
+  finish(n,out,card,t);
+ }
+ else if(a==='copy'){
+  const ta=$('#sum'),msg=$('#copied');
+  const fallback=()=>{ta.focus();ta.select();msg.textContent='Press Ctrl+C (or Cmd+C) to copy the selected text.'};
+  try{navigator.clipboard.writeText(ta.value).then(()=>{msg.textContent='Copied.'},fallback)}catch(_){fallback()}
+ }
+ else if(a==='restart'){S=fresh();S.scroll='top';render()}
+ else if(a==='casefile'){$('#case').hidden=false;$('#caseclose').focus()}
+ else if(a==='closecase'){$('#case').hidden=true;$('#casebtn').focus()}
+});
+document.addEventListener('change',ev=>{
+ const s=ev.target.closest('[data-sel]');if(!s)return;
+ const p=s.dataset.p,v=s.value;if(v)S.zero[p]=v;else delete S.zero[p];
+ S.focus=s.dataset.fk;render();
+});
+document.addEventListener('submit',ev=>{if(ev.target.id==='startform'){ev.preventDefault();document.querySelector('[data-act="start"]').click()}});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!$('#case').hidden){$('#case').hidden=true;$('#casebtn').focus()}});
+$('#case').addEventListener('click',ev=>{if(ev.target.id==='case')$('#case').hidden=true});
+render();
+})();
+</script>
+
+</body>
+</html>
