@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Delta Wheels Council</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Look: city traffic. Asphalt panels, a yellow centre line, road-sign yellow coins, and a metro-style route that shows the five rounds. Each round has its own line colour; each product keeps one colour from card to map. */
+:root{
+  --bg:#F1F4F6; --surface:#FFFFFF; --ink:#141B22; --muted:#56626E; --line:#D2D9DF; --chip:#E6EBEF; --edge:#141B22;
+  --r1:#1D4ED8; --r1-ink:#FFFFFF; --r2:#0B7A57; --r2-ink:#FFFFFF; --r3:#C2410C; --r3-ink:#FFFFFF; --r4:#6D28D9; --r4-ink:#FFFFFF; --r5:#BE185D; --r5-ink:#FFFFFF;
+  --coin:#FFC400; --coin-ink:#2A2000; --tray:#FFF4C2;
+  --good:#0E7A42; --good-bg:#DCF5E6; --bad:#C62A1B; --bad-bg:#FFE4E0; --scrim:rgba(10,14,18,.62);
+  --hero:#1B2128; --hero-ink:#FFFFFF; --hero-soft:rgba(255,255,255,.8);
+  --c-city:#2563EB; --c-volt:#059669; --c-cargo:#D97706; --c-moped:#7C8597;
+  --q-star:rgba(255,196,0,.22); --q-qm:rgba(217,119,6,.14); --q-cow:rgba(37,99,235,.12); --q-dog:rgba(124,133,151,.16);
+  --f-display:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --f-body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'DM Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1318; --surface:#171E25; --ink:#EDF1F5; --muted:#A0ACB8; --line:#2B3640; --chip:#212A33; --edge:#3A4754;
+  --r1:#7AA2FF; --r1-ink:#08142E; --r2:#34D399; --r2-ink:#03261B; --r3:#FB923C; --r3-ink:#331500; --r4:#A78BFA; --r4-ink:#1B0B45; --r5:#F472B6; --r5-ink:#3D0720;
+  --coin:#FFD43B; --coin-ink:#2A2000; --tray:#2A2510;
+  --good:#4ADE80; --good-bg:#0F2E1B; --bad:#FF7A68; --bad-bg:#3A1714; --scrim:rgba(0,0,0,.7);
+  --hero:#1B222B;
+  --c-city:#60A5FA; --c-volt:#34D399; --c-cargo:#FBBF24; --c-moped:#9AA5B8;
+  --q-star:rgba(255,212,59,.16); --q-qm:rgba(251,191,36,.12); --q-cow:rgba(96,165,250,.14); --q-dog:rgba(154,165,184,.12); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1318; --surface:#171E25; --ink:#EDF1F5; --muted:#A0ACB8; --line:#2B3640; --chip:#212A33; --edge:#3A4754;
+  --r1:#7AA2FF; --r1-ink:#08142E; --r2:#34D399; --r2-ink:#03261B; --r3:#FB923C; --r3-ink:#331500; --r4:#A78BFA; --r4-ink:#1B0B45; --r5:#F472B6; --r5-ink:#3D0720;
+  --coin:#FFD43B; --coin-ink:#2A2000; --tray:#2A2510;
+  --good:#4ADE80; --good-bg:#0F2E1B; --bad:#FF7A68; --bad-bg:#3A1714; --scrim:rgba(0,0,0,.7);
+  --hero:#1B222B;
+  --c-city:#60A5FA; --c-volt:#34D399; --c-cargo:#FBBF24; --c-moped:#9AA5B8;
+  --q-star:rgba(255,212,59,.16); --q-qm:rgba(251,191,36,.12); --q-cow:rgba(96,165,250,.14); --q-dog:rgba(154,165,184,.12); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.5;padding-inline:16px;padding-block:0 48px}
+.wrap{max-width:920px;margin-inline:auto}
+h1,h2,h3{font-family:var(--f-display);font-weight:800;line-height:1.05;margin:0;text-wrap:balance;text-transform:uppercase;letter-spacing:.02em}
+p{margin:0}
+button,select,textarea,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--coin);outline-offset:2px}
+
+.stage{--rc:var(--r1);--rc-ink:var(--r1-ink)}
+.stage.s1{--rc:var(--r1);--rc-ink:var(--r1-ink)}
+.stage.s2{--rc:var(--r2);--rc-ink:var(--r2-ink)}
+.stage.s3{--rc:var(--r3);--rc-ink:var(--r3-ink)}
+.stage.s4{--rc:var(--r4);--rc-ink:var(--r4-ink)}
+.stage.s5{--rc:var(--r5);--rc-ink:var(--r5-ink)}
+
+/* scoreboard + route */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px 12px;margin-bottom:24px;display:flex;flex-direction:column;gap:10px;border-bottom:4px dashed var(--coin)}
+.hud-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:700;font-size:16px;letter-spacing:.14em;text-transform:uppercase}
+.hud-right{display:flex;align-items:center;gap:12px}
+.score{font-family:var(--f-display);font-weight:800;font-size:28px;line-height:1;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:8px}
+.score::before{content:"";width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--coin) 60%,#fff),var(--coin));box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--coin) 55%,#000)}
+.score small{font-family:var(--f-mono);font-size:12px;color:var(--muted);font-weight:400}
+.route{display:flex;align-items:center;gap:0}
+.route .st{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:3px solid var(--line);font-family:var(--f-mono);font-size:11px;color:var(--muted);flex:none}
+.route .ln{flex:1;height:5px;background:var(--line);min-width:6px}
+.route .st.done{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.route .ln.done{background:var(--ink)}
+.route .st.on{color:#fff}
+.route .st.on.r0{background:var(--r1);border-color:var(--r1);color:var(--r1-ink)}
+.route .st.on.r1{background:var(--r2);border-color:var(--r2);color:var(--r2-ink)}
+.route .st.on.r2{background:var(--r3);border-color:var(--r3);color:var(--r3-ink)}
+.route .st.on.r3{background:var(--r4);border-color:var(--r4);color:var(--r4-ink)}
+.route .st.on.r4{background:var(--r5);border-color:var(--r5);color:var(--r5-ink)}
+.route .st.on.r5{background:var(--coin);border-color:var(--coin);color:var(--coin-ink)}
+.routename{font-family:var(--f-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+.btn{border:0;border-radius:999px;padding:12px 26px;font-family:var(--f-display);font-weight:700;font-size:19px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;background:var(--rc,var(--r1));color:var(--rc-ink,var(--r1-ink));transition:transform .1s,filter .1s}
+.btn:hover{filter:brightness(1.1)}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.4;cursor:not-allowed;filter:none;transform:none}
+.btn.ghost{background:transparent;color:var(--ink);padding:7px 16px;font-size:16px;box-shadow:inset 0 0 0 2px var(--ink)}
+
+.stage{display:flex;flex-direction:column;gap:20px}
+.kicker{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--rc);font-weight:500}
+.card{background:var(--surface);border:2px solid var(--edge);border-radius:12px;padding:20px}
+.lead{color:var(--muted);max-width:62ch}
+.q-head{display:flex;flex-direction:column;gap:8px}
+.q-head h2{font-size:clamp(26px,4.4vw,38px)}
+.dots{display:flex;gap:6px}
+.dots i{width:28px;height:6px;border-radius:3px;background:var(--line)}
+.dots i.d{background:var(--rc)}
+.dots i.c{background:var(--ink)}
+.alert{display:flex;gap:12px;align-items:flex-start;background:var(--coin);color:var(--coin-ink);border-radius:10px;padding:12px 16px;font-weight:600}
+.alert b{font-family:var(--f-display);font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:18px;white-space:nowrap}
+
+/* hero panel */
+.hero{position:relative;overflow:hidden;background:var(--hero);color:var(--hero-ink);border-radius:18px;padding:30px 28px 44px;display:flex;flex-direction:column;gap:14px}
+.hero::before{content:"";position:absolute;left:0;right:0;bottom:16px;height:6px;background:repeating-linear-gradient(90deg,var(--coin) 0 30px,transparent 30px 56px)}
+.hero::after{content:"";position:absolute;right:18px;top:18px;width:62px;height:62px;background:var(--coin);transform:rotate(45deg);border-radius:8px;box-shadow:inset 0 0 0 4px var(--coin),inset 0 0 0 7px var(--hero)}
+.hero>*{position:relative;z-index:1;max-width:calc(100% - 90px)}
+.hero h1{font-size:clamp(40px,9vw,76px);color:var(--hero-ink)}
+.hero .kicker{color:var(--coin)}
+.hero .lead{color:var(--hero-soft)}
+.rounds{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.rounds .card{display:flex;flex-direction:column;gap:6px;border-color:var(--cc);border-top-width:8px;padding-top:14px}
+.rounds .card:nth-child(1){--cc:var(--r1)}.rounds .card:nth-child(2){--cc:var(--r2)}.rounds .card:nth-child(3){--cc:var(--r3)}.rounds .card:nth-child(4){--cc:var(--r4)}.rounds .card:nth-child(5){--cc:var(--r5)}
+.rounds .kicker{color:var(--cc)}
+.rounds b{font-family:var(--f-display);font-weight:800;font-size:24px;text-transform:uppercase;letter-spacing:.03em;line-height:1}
+.pts{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.form{display:grid;gap:12px;max-width:560px}
+.form label{display:grid;gap:6px;font-weight:600;font-size:15px}
+.form input,.form textarea{border:2px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;width:100%;resize:vertical}
+.form input:focus,.form textarea:focus{border-color:var(--rc)}
+ul.rules{margin:0;padding-left:20px;color:var(--muted);display:grid;gap:4px;max-width:62ch}
+
+/* choices */
+.opts{display:grid;gap:10px}
+.opt{display:grid;grid-template-columns:32px minmax(0,1fr);gap:12px;text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;align-items:start;transition:border-color .1s,transform .1s}
+.opt:hover:not([disabled]){border-color:var(--rc);transform:translateX(3px)}
+.opt .l{font-family:var(--f-display);font-weight:800;font-size:18px;width:32px;height:32px;border-radius:50%;background:var(--rc);color:var(--rc-ink);display:grid;place-items:center}
+.opt .fb{display:block;margin-top:6px;font-size:15px;color:var(--bad)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg);cursor:default}
+.opt.wrong .l{background:var(--bad);color:var(--surface)}
+.opt.right{border-color:var(--good);background:var(--good-bg);cursor:default}
+.opt.right .l{background:var(--good);color:var(--surface)}
+.opt[disabled]{cursor:default}
+.why{border:2px solid var(--rc);padding:12px 16px;background:var(--surface);border-radius:12px}
+.earn{font-family:var(--f-display);font-weight:800;font-size:26px;color:var(--good);animation:pop .4s ease-out}
+.earn.zero{color:var(--muted)}
+@keyframes pop{from{transform:translateY(6px);opacity:0}to{transform:none;opacity:1}}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+
+/* sorting cards */
+.scards{display:grid;gap:12px}
+.scard{background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px}
+.seg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.segb{border:2px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 12px;cursor:pointer;font-weight:600;font-size:15px}
+.segb:hover:not([disabled]){border-color:var(--rc)}
+.segb.sel{background:var(--rc);color:var(--rc-ink);border-color:var(--rc)}
+.segb.right{background:var(--good);color:var(--surface);border-color:var(--good);opacity:1}
+.segb.wrong{background:var(--bad);color:var(--surface);border-color:var(--bad);opacity:1}
+.segb[disabled]{cursor:default;opacity:.55}
+.sfb{font-size:15px}
+.ok{color:var(--good);font-weight:700}.no{color:var(--bad);font-weight:700}
+
+/* invest + matrix */
+.tray{display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:calc(env(safe-area-inset-top,0px) + 96px);z-index:4;background:var(--tray);border:2px solid var(--edge);border-radius:12px;padding:12px 16px}
+.coins{display:flex;gap:5px;flex-wrap:wrap}
+.coin{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--coin) 60%,#fff),var(--coin));box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--coin) 55%,#000)}
+.coin.empty{background:transparent;box-shadow:inset 0 0 0 2px var(--line)}
+.coin.sm{width:16px;height:16px}
+.tray b{font-family:var(--f-display);font-weight:800;font-size:22px;text-transform:uppercase;font-variant-numeric:tabular-nums}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:16px}
+.pcard{display:flex;flex-direction:column;gap:12px;min-width:0}
+.pcard h3{font-size:24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dot{display:inline-block;width:16px;height:16px;border-radius:50%;flex:none}
+.chip{font-family:var(--f-mono);font-size:12px;background:var(--chip);border-radius:6px;padding:3px 8px;text-transform:none;letter-spacing:0;font-weight:400}
+.pcard .what{color:var(--muted);font-size:16px}
+.facts{display:grid;gap:8px;margin:0}
+.facts div{display:grid;grid-template-columns:130px minmax(0,1fr);gap:8px;font-size:15px}
+.facts dt{color:var(--muted)}
+.facts dd{margin:0;font-variant-numeric:tabular-nums;font-weight:600}
+.facts small{display:block;color:var(--muted);font-size:14px;font-weight:400}
+.field{display:grid;gap:6px;font-size:14px;font-weight:600;color:var(--muted)}
+select{border:2px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;width:100%;color:var(--ink)}
+select:focus{border-color:var(--rc)}
+.stepper{display:flex;align-items:center;gap:12px}
+.stepper button{width:44px;height:44px;border-radius:50%;border:2px solid var(--ink);background:var(--surface);font-size:24px;cursor:pointer;line-height:1;font-weight:700}
+.stepper button:hover:not([disabled]){background:var(--rc);color:var(--rc-ink);border-color:var(--rc)}
+.stepper button[disabled]{opacity:.3;cursor:not-allowed}
+.stepper .n{font-family:var(--f-display);font-weight:800;font-size:36px;min-width:1.3em;text-align:center;font-variant-numeric:tabular-nums}
+.pips{display:flex;gap:4px}
+.mapcard svg{width:100%;height:auto;display:block}
+.mapcard .note{font-size:14px;color:var(--muted);margin-top:8px}
+.svgtxt{font-family:var(--f-mono);fill:var(--muted)}
+details.refresh{background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:12px 16px}
+details summary{cursor:pointer;font-weight:700}
+details dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:10px 0 0}
+details dt{font-weight:700}details dd{margin:0;color:var(--muted)}
+.need{font-size:15px;color:var(--muted)}
+.res{display:grid;gap:10px}
+.res .rp{display:grid;gap:4px;padding:12px 0;border-top:2px solid var(--line);min-width:0}
+
+/* verdict */
+.big{font-family:var(--f-display);font-weight:800;font-size:clamp(72px,18vw,140px);line-height:.9;font-variant-numeric:tabular-nums;color:var(--coin)}
+.big small{font-size:.28em;color:var(--hero-soft);font-family:var(--f-mono);font-weight:400}
+.bars{display:grid;gap:12px}
+.bar{display:grid;grid-template-columns:110px minmax(0,1fr) 60px;gap:10px;align-items:center;font-size:15px;font-weight:600}
+.bar .t{height:14px;background:var(--chip);border-radius:7px;overflow:hidden}
+.bar .t i{display:block;height:100%}
+.bar span:last-child{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;font-size:13px}
+.badges{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.badge{display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;align-items:center;padding:10px 12px;border:2px solid var(--edge);border-radius:12px;background:var(--surface)}
+.badge.off{opacity:.5;border-color:var(--line)}
+.badge .coin{width:30px;height:30px}
+.badge.off .coin{background:transparent;box-shadow:inset 0 0 0 2px var(--line)}
+.badge b{font-size:16px;display:block}.badge span{font-size:14px;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:8px 10px;border-bottom:2px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+textarea.sum{width:100%;min-height:220px;border:2px solid var(--line);background:var(--surface);border-radius:10px;padding:12px;font-family:var(--f-mono);font-size:12px}
+
+/* case sheet */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:20;display:grid;place-items:center;padding:16px}
+.sheet{background:var(--surface);border:2px solid var(--edge);border-radius:16px;max-width:840px;width:100%;max-height:calc(100% - 8px);overflow:auto;padding:24px;display:grid;gap:18px}
+.sheet h2{font-size:30px}.sheet h3{font-size:16px;font-family:var(--f-mono);font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--r1);margin-bottom:6px}
+.sheet blockquote{margin:0;padding:4px 0 4px 14px;border-left:5px solid var(--coin);color:var(--ink)}
+.sheet .quotes{display:grid;gap:10px}
+.sheet ul{margin:0;padding-left:20px;display:grid;gap:4px}
+.sheet .meta{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+
+@media (max-width:520px){
+  .bar{grid-template-columns:80px minmax(0,1fr) 54px}
+  .tray{top:calc(env(safe-area-inset-top,0px) + 116px)}
+  .facts div{grid-template-columns:1fr;gap:0}
+  .hero{padding:24px 20px 40px}
+  .hero::after{width:44px;height:44px;right:14px;top:14px}
+  .hero>*{max-width:calc(100% - 56px)}
+  .alert{flex-direction:column;gap:2px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="hud">
+    <div class="hud-row">
+      <span class="brand">Delta Wheels &middot; Council</span>
+      <div class="hud-right">
+        <span class="score" id="score">0 <small>/ 100</small></span>
+        <button class="btn ghost" data-act="casefile" id="casebtn" type="button">Case sheet</button>
+      </div>
+    </div>
+    <div class="row" style="gap:10px;flex-wrap:nowrap"><div class="route" id="route" style="flex:1"></div><span class="routename" id="routename"></span></div>
+  </header>
+  <main class="stage" id="stage" aria-live="polite"></main>
+</div>
+
+<div class="scrim" id="case" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="casetitle">
+    <div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div><h2 id="casetitle">The Delta Wheels Council</h2>
+      <p class="meta">BUS 1410 &middot; Introduction to Marketing &middot; Groups &middot; about 25 minutes</p></div>
+      <button class="btn ghost" data-act="closecase" id="caseclose" type="button">Close</button>
+    </div>
+    <div>
+      <h3>Your role</h3>
+      <p>You are the strategy team at Delta Wheels. The CEO has called an emergency council. She has 10 investment tokens to spend on next year's growth and wants your team's recommendation by the end of the session.</p>
+    </div>
+    <div>
+      <h3>About Delta Wheels</h3>
+      <p>Delta Wheels is an Egyptian mobility company founded in Mansoura in 2012. It sells online and through shops in Cairo, Giza, Alexandria and several Delta cities. Most customers are students, office workers and delivery riders aged 18 to 40 who live in crowded cities.</p>
+      <p style="margin-top:8px"><b>Current mission statement:</b> &ldquo;We build bikes, scooters and mopeds.&rdquo;</p>
+    </div>
+    <div>
+      <h3>The portfolio</h3>
+      <p class="pts" style="margin-bottom:8px">Relative market share: above 1 means we lead the market; below 1 means a rival is bigger than us.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Product</th><th>What it is</th><th class="num">Yearly sales (EGP million)</th><th>Relative market share</th><th>Market growth per year</th></tr></thead>
+        <tbody>
+          <tr><td>Delta City Bikes</td><td>Pedal bikes for getting around town</td><td class="num">80</td><td>1.8 (we sell almost twice as much as our nearest rival)</td><td>3%</td></tr>
+          <tr><td>Delta Volt</td><td>Electric scooters</td><td class="num">55</td><td>1.4 (we are the market leader)</td><td>28%</td></tr>
+          <tr><td>Delta Cargo</td><td>Electric cargo bikes for delivery riders</td><td class="num">10</td><td>0.25 (the leader sells four times more than us)</td><td>35%</td></tr>
+          <tr><td>Delta Moped</td><td>Petrol mopeds</td><td class="num">35</td><td>0.3 (the leader sells over three times more than us)</td><td>&minus;12% (shrinking)</td></tr>
+        </tbody></table></div>
+    </div>
+    <div>
+      <h3>What customers say</h3>
+      <div class="quotes">
+        <blockquote>&ldquo;Traffic on the ring road is crazy. My e-scooter gets me to class in 15 minutes, fits in the lift, and costs me less than taxis.&rdquo;</blockquote>
+        <blockquote>&ldquo;I bought my bike because it was the cheapest one that lasts. Any brand would do.&rdquo;</blockquote>
+        <blockquote>&ldquo;I deliver food all day. My petrol moped costs a fortune now, and the city may ban them downtown.&rdquo;</blockquote>
+        <blockquote>&ldquo;I would love an e-bike with a big box on the back for my deliveries, but the one I tried broke down twice.&rdquo;</blockquote>
+      </div>
+    </div>
+    <div>
+      <h3>Rules</h3>
+      <ul>
+        <li>Your reasoning must come from this sheet and your own judgement. Some answers are better than others, so use the evidence.</li>
+        <li>Your instructor may call on any member of your group to defend your answers, so make sure everyone understands them.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const L='ABCD';
+const CLS={star:'Star',cow:'Cash cow',qm:'Question mark',dog:'Dog'};
+const ROUNDS=[{k:'r1',n:'Value'},{k:'r2',n:'Mission'},{k:'r3',n:'Matrix'},{k:'r4',n:'Invest'},{k:'r5',n:'Twist'}];
+const NEXT={r1:'r2',r2:'r3',r3:'r4',r4:'r5',r5:'end'};
+const SC={intro:-1,r1:0,r2:1,r3:2,r4:3,r5:4,end:5};
+
+/* ---------- data (from the case sheet) ---------- */
+const PROD=[
+ {id:'city',name:'Delta City Bikes',what:'Pedal bikes for getting around town',sales:80,share:1.8,growth:3,col:'var(--c-city)',
+  shareNote:'We sell almost twice as much as our nearest rival',growthTxt:'+3% a year',bcg:'cow',
+  bcgWhy:'High share (1.8) in a slow market (3% growth).',
+  alloc:(t,z)=>t===0?(z==='run'?[5,'Good call. City bikes already earn EGP 80 million without help.']:[0,'Dropping your biggest seller would cut the cash that pays for growth.']):t<=2?[5,'Good. A small top-up protects a steady seller in a market growing only 3%.']:t===3?[3,'A bit high. Slow growth means extra tokens add little.']:[0,'Too many. In a market growing 3%, extra tokens add little. City bikes should make cash, not use it.']},
+ {id:'volt',name:'Delta Volt',what:'Electric scooters',sales:55,share:1.4,growth:28,col:'var(--c-volt)',
+  shareNote:'We are the market leader',growthTxt:'+28% a year',bcg:'star',
+  bcgWhy:'Market leader (1.4) in a fast-growing market (28% growth).',
+  alloc:t=>t>=4?[5,'Good. Delta leads a market growing 28% a year, so tokens work hard here.']:t===3?[3,'OK, but a leader in a fast-growing market deserves more.']:[0,'Too few. Volt is Delta\'s best chance to grow and keep its lead.']},
+ {id:'cargo',name:'Delta Cargo',what:'Electric cargo bikes for delivery riders',sales:10,share:0.25,growth:35,col:'var(--c-cargo)',
+  shareNote:'The leader sells four times more than us',growthTxt:'+35% a year',bcg:'qm',
+  bcgWhy:'Small share (0.25) in a very fast-growing market (35% growth).',
+  alloc:t=>(t>=2&&t<=4)?[5,'Good. Delivery grows 35% a year, but Delta\'s share is only 0.25 and drivers report breakdowns. Spend carefully, starting with quality.']:t===5?[3,'Risky. Delta Cargo is not winning yet, so keep some tokens for other products.']:t===1?[3,'Very small. The market is growing fast, so one token may not change much.']:[0,'Zero ignores a market growing 35% a year. Test it first.']},
+ {id:'moped',name:'Delta Moped',what:'Petrol mopeds',sales:35,share:0.3,growth:-12,col:'var(--c-moped)',
+  shareNote:'The leader sells over three times more than us',growthTxt:'−12% a year (shrinking)',bcg:'dog',
+  bcgWhy:'Small share (0.3) in a shrinking market (−12% growth).',
+  alloc:(t,z)=>t<=1?[5,t===0?(z==='drop'?'Reasonable. Petrol mopeds are shrinking 12% a year.':'Reasonable. Mopeds still bring in EGP 35 million without new tokens.'):'Reasonable. One token keeps the remaining sales.']:t===2?[3,'More than needed for a shrinking market.']:[0,'These tokens are unlikely to pay back in a shrinking market.']}
+];
+
+/* ---------- state ---------- */
+let S;
+const KEY='ms1-delta-v1';
+function save(){if(window.__reset)return;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(_){}}
+function fresh(){return{screen:'intro',team:'',members:'',i:0,q:{},sort:{},order:{},alloc:{city:0,volt:0,cargo:0,moped:0},cls:{},zero:{},bcg:null,inv:null,focus:null}}
+S=fresh();
+(function restore(){try{
+ if(location.hash==='#reset'){localStorage.removeItem(KEY);try{history.replaceState(null,'',location.pathname+location.search)}catch(_){}}
+ const raw=localStorage.getItem(KEY);
+ if(raw){const o=JSON.parse(raw);if(o&&typeof o==='object'&&o.screen&&o.screen!=='intro'){S=Object.assign(fresh(),o);S.focus=null;S.typing=null;S.run=Date.now();S.restored=true}}
+}catch(_){}})();
+window.addEventListener('hashchange',()=>{if(location.hash==='#reset'){window.__reset=true;try{localStorage.removeItem(KEY)}catch(_){}location.replace(location.pathname+location.search)}});
+
+/* ---------- steps ---------- */
+const CUST={id:'cust',kicker:'Customer',pts:8,
+ prompt:'Which sentence best describes Delta Wheels\' target customer?',
+ opts:[
+  {t:'Everyone in Egypt.',fb:'Too broad. Pick a group the case sheet describes.'},
+  {t:'Students, office workers and delivery riders aged 18 to 40 in crowded cities who need quick, cheap ways to get around.',ok:1},
+  {t:'Rich tourists who want luxury rides.',fb:'The customers in the case sheet want cheap, practical ways to get around.'},
+  {t:'Professional cyclists who race.',fb:'Nothing in the case sheet mentions racing.'}],
+ why:'A good answer says who the customers are (age, life stage, place) and what they need. Here: students, office workers and delivery riders in crowded cities who need quick, cheap ways to get around.'};
+const VSORT={id:'vsort',type:'sort',kicker:'Value',per:2,
+ note:'We will use Delta Volt, the electric scooter.',
+ prompt:'Is each statement value CREATED for the customer, or value CAPTURED by Delta?',
+ labels:[['created','Value created'],['captured','Value captured']],
+ cards:[
+  {t:'Gets to class in 15 minutes, even in heavy traffic.',a:'created',why:'A benefit the customer gets.'},
+  {t:'EGP 55 million in yearly sales.',a:'captured',why:'Money Delta earns.'},
+  {t:'Fits in the lift, so it is easy to carry.',a:'created',why:'A benefit the customer gets.'},
+  {t:'A 1.4 market share, ahead of the nearest rival.',a:'captured',why:'Delta\'s position in the market.'},
+  {t:'Costs less than taking taxis.',a:'created',why:'A benefit the customer gets.'},
+  {t:'The leading position in a market growing 28% a year.',a:'captured',why:'Delta\'s position in the market.'}],
+ };
+const MSORT={id:'msort',type:'sort',kicker:'Mission',per:2,
+ prompt:'Is each mission statement product-oriented or market-oriented?',
+ note:'Product-oriented: about what the company makes. Market-oriented: about the customer\'s need.',
+ labels:[['product','Product-oriented'],['market','Market-oriented']],
+ cards:[
+  {t:'We make petrol mopeds.',a:'product',why:'It names what the company makes.'},
+  {t:'We help people cross busy cities quickly, cheaply and cleanly.',a:'market',why:'It names the customer\'s need.'},
+  {t:'We build the best bikes in Egypt.',a:'product',why:'Still about the product.'},
+  {t:'We keep young Egyptians moving, so nothing slows them down.',a:'market',why:'It names what the customer wants.'}]};
+const MREWRITE={id:'mrewrite',kicker:'Mission',pts:12,
+ prompt:'The current mission is "We build bikes, scooters and mopeds." Which new mission is market-oriented?',
+ opts:[
+  {t:'We build the best bikes, scooters and mopeds in Egypt.',fb:'Still about products. It only adds "best".'},
+  {t:'We help people in crowded Egyptian cities get where they need to go quickly, cheaply and cleanly.',ok:1},
+  {t:'We want to sell one million vehicles by 2030.',fb:'That is a sales goal. It does not mention the customer\'s need.'},
+  {t:'We make electric scooters and cargo bikes.',fb:'Still about products, just a different list.'}],
+ why:'A market-oriented mission starts with the customer\'s need: getting around crowded cities quickly, cheaply and cleanly. It also lets Delta move away from petrol mopeds without changing its mission.'};
+function r5Steps(){
+ return [
+  {id:'c1',pts:10,kicker:'Moped',
+   alert:'Fuel prices jump 30%. The city says petrol mopeds will be banned from downtown within two years.',
+   prompt:'Delta Moped is a Dog. What should Delta do with it now?',
+   opts:[
+    {t:'Spend little or nothing on it.',ok:1},
+    {t:'Give it extra tokens to fight the ban.',fb:'A Dog has a small share in a shrinking market. Extra tokens will not fix that.'},
+    {t:'Make it the main product.',fb:'The market is shrinking, so it is a poor choice for the future.'}],
+   why:'A Dog gets little or no investment. Delta should put its tokens on products with a future.'},
+  {id:'c2',pts:10,kicker:'Volt',
+   prompt:'Delta Volt is a Star. What should Delta do with it?',
+   opts:[
+    {t:'Keep investing to stay the leader.',ok:1},
+    {t:'Stop spending and collect the cash.',fb:'That is the plan for a Cash cow. A Star is still growing fast.'},
+    {t:'Drop it.',fb:'Delta leads a fast-growing market. Dropping it would waste its best chance.'}],
+   why:'A Star leads a fast-growing market, so it is worth investing in to keep the lead.'}
+ ];
+}
+function steps(){
+ return {r1:[CUST,VSORT],r2:[MSORT,MREWRITE],r5:null}[S.screen]||r5Steps();
+}
+
+/* ---------- scoring ---------- */
+function total(){let s=0;for(const k in S.q)s+=S.q[k].earned||0;for(const k in S.sort)s+=S.sort[k].earned||0;if(S.bcg)s+=S.bcg.total;if(S.inv)s+=S.inv.total;return s}
+function e(id){return (S.q[id]&&S.q[id].earned)||(S.sort[id]&&S.sort[id].earned)||0}
+function roundScores(){return [e('cust')+e('vsort'),e('msort')+e('mrewrite'),S.bcg?S.bcg.total:0,S.inv?S.inv.total:0,e('c1')+e('c2')]}
+function titleFor(n){return n>=90?'Chair of the Council':n>=75?'Senior Strategist':n>=55?'Strategy Analyst':'Intern with Potential'}
+function scoreBcg(){let t=0;const rows=PROD.map(p=>{const c=S.cls[p.id],ok=c===p.bcg;if(ok)t+=5;return{p,c,ok}});return{total:t,rows}}
+function scoreInv(){let t=0;const rows=PROD.map(p=>{const n=S.alloc[p.id],[ap,at]=p.alloc(n,S.zero[p.id]);t+=ap;return{p,n,ap,at}});return{total:t,rows}}
+
+/* ---------- views ---------- */
+function track(){
+ const cur=SC[S.screen];
+ let h='';
+ for(let i=0;i<=5;i++){
+  h+=`<span class="st ${i===cur?'on r'+i:i<cur?'done':''}">${i<5?i+1:'⚑'}</span>`;
+  if(i<5)h+=`<span class="ln ${i<cur?'done':''}"></span>`;
+ }
+ $('#route').innerHTML=h;
+ $('#routename').textContent=cur<0?'Start':cur<5?ROUNDS[cur].n:'Verdict';
+ $('#score').innerHTML=`${total()} <small>/ 100</small>`;
+}
+function dots(list,idx){
+ if(list.length<2)return '';
+ return `<div class="dots" aria-hidden="true">${list.map((s,i)=>{const d=(S.q[s.id]&&S.q[s.id].done)||(S.sort[s.id]&&S.sort[s.id].done);return `<i class="${d?'d':i===idx?'c':''}"></i>`}).join('')}</div>`;
+}
+function rlabel(){const i=SC[S.screen];return `Round ${i+1} &middot; ${ROUNDS[i].n}`}
+function introView(){
+ const cards=[['Value','Pick the target customer and sort who gets which benefit.'],['Mission','Sort four missions, then pick the best rewrite.'],['Matrix','Place each product on the BCG matrix.'],['Invest','Spend your 10 tokens across the four products.'],['Twist','Breaking news hits. Answer two quick questions.']];
+ return `<section class="hero">
+  <span class="kicker">BUS 1410 &middot; Introduction to Marketing</span>
+  <h1>The Delta Wheels Council</h1>
+  <p class="lead">You are the strategy team at Delta Wheels, a mobility company in Egypt. The CEO has 10 investment tokens to spend on next year's growth. She wants your recommendation by the end of the session. This game takes about 25 minutes.</p>
+ </section>
+ <div class="rounds">${cards.map((c,i)=>`<div class="card"><span class="kicker">Round ${i+1}</span><b>${c[0]}</b><p>${c[1]}</p><span class="pts">20 points</span></div>`).join('')}</div>
+ <ul class="rules">
+  <li>Use the Case sheet (button at the top) for the facts.</li>
+  <li>In multiple-choice questions, a wrong answer lets you try again for half the points.</li>
+  <li>In the sorting, matrix and invest rounds, you check your answers once.</li>
+  <li>Play as a group on one screen. Everyone should be able to explain the answers.</li>
+ </ul>
+ <form class="form" id="startform">
+  <label for="team">Team name<input id="team" type="text" placeholder="Team Delta" maxlength="40" autocomplete="off"></label>
+  <label for="members">Group members<textarea id="members" rows="2" placeholder="One name per line, or separated by commas"></textarea></label>
+  <div><button class="btn" type="submit" data-act="start">Start the council</button></div>
+ </form>`;
+}
+function choiceView(step,idx,list){
+ const st=S.q[step.id]||(S.q[step.id]={tries:[],done:false,earned:0});
+ if(!S.order[step.id])S.order[step.id]=shuffle(step.opts.map((_,i)=>i));
+ const order=S.order[step.id];
+ const opts=order.map((oi,pos)=>{
+  const o=step.opts[oi];const tried=st.tries.includes(oi);
+  const cls=st.done&&o.ok?'right':tried?'wrong':'';
+  return `<button type="button" class="opt ${cls}" data-act="pick" data-i="${oi}" ${st.done||tried?'disabled':''}>
+   <span class="l">${L[pos]}</span><span>${esc(o.t)}${tried&&!o.ok?`<span class="fb">${esc(o.fb)}</span>`:''}</span></button>`;
+ }).join('');
+ let foot='';
+ if(st.done){
+  const first=st.tries.length===1,second=st.tries.length===2;
+  foot=`<div class="why"><b>Why:</b> ${esc(step.why)}</div>
+   <div class="row"><span class="earn ${st.earned?'':'zero'}">+${st.earned} pts</span><span class="pts">${first?'First try':second?'Second try, half points':'Third try, no points'}</span></div>
+   <div><button class="btn" type="button" data-act="cont">${idx===list.length-1?(S.screen==='r5'?'See the verdict':'Next round'):'Next question'}</button></div>`;
+ }else if(st.tries.length){
+  foot=`<p class="need">Not quite. Read the note, then try again for half points.</p>`;
+ }
+ const ceo=S.screen==='r5'?`<span class="kicker">The CEO asks</span>`:'';
+ return `<div class="q-head"><span class="kicker">${rlabel()} &middot; ${step.kicker}</span>${dots(list,idx)}
+  ${step.alert?`<div class="alert"><b>Breaking news</b><span>${esc(step.alert)}</span></div>`:''}${ceo}<h2>${esc(step.prompt)}</h2>${step.note?`<p class="lead">${esc(step.note)}</p>`:''}</div>
+  <div class="opts">${opts}</div>${foot}`;
+}
+function sortView(step,idx,list){
+ const st=S.sort[step.id]||(S.sort[step.id]={picks:{},done:false,earned:0});
+ const all=step.cards.every((_,i)=>st.picks[i]);
+ const cards=step.cards.map((c,ci)=>{
+  const pk=st.picks[ci],ok=pk===c.a;
+  return `<div class="scard"><p>${esc(c.t)}</p><div class="seg">${step.labels.map(([k,l])=>{
+   const cl=st.done?(k===c.a?'right':pk===k?'wrong':''):(pk===k?'sel':'');
+   return `<button type="button" class="segb ${cl}" data-act="spick" data-c="${ci}" data-k="${k}" data-fk="s${ci}-${k}" aria-pressed="${pk===k}" ${st.done?'disabled':''}>${l}</button>`}).join('')}</div>
+   ${st.done?`<p class="sfb"><span class="${ok?'ok':'no'}">${ok?'Correct.':'Not quite.'}</span> ${esc(c.why)}</p>`:''}</div>`}).join('');
+ let foot='';
+ if(st.done)foot=`<div class="row"><span class="earn ${st.earned?'':'zero'}">+${st.earned} pts</span><span class="pts">${st.earned/step.per} of ${step.cards.length} correct</span></div>
+   <div><button class="btn" type="button" data-act="cont">${idx===list.length-1?'Next round':'Next question'}</button></div>`;
+ else foot=`<div class="row"><button class="btn" type="button" data-act="scheck" ${all?'':'disabled'}>Check my answers</button>${all?'':`<span class="need">Sort every card first.</span>`}</div>`;
+ return `<div class="q-head"><span class="kicker">${rlabel()} &middot; ${step.kicker}</span>${dots(list,idx)}<h2>${esc(step.prompt)}</h2>${step.note?`<p class="lead">${esc(step.note)}</p>`:''}</div>
+  <div class="scards">${cards}</div>${foot}`;
+}
+
+function xOf(s){const t=(Math.log10(s)-Math.log10(.1))/(Math.log10(3)-Math.log10(.1));return 56+(1-t)*560}
+function yOf(g){return 24+(35-g)/50*292}
+function mapSvg(reveal){
+ const gl=[-10,0,10,20,30].map(g=>`<line x1="56" x2="616" y1="${yOf(g)}" y2="${yOf(g)}" stroke="var(--line)" stroke-width="${g===10?2:1}" ${g===10?'':'stroke-dasharray="3 5"'}/><text class="svgtxt" x="48" y="${yOf(g)+5}" text-anchor="end" font-size="14">${g>0?'+':g<0?'−':''}${Math.abs(g)}%</text>`).join('');
+ const sl=[2,1,.5,.2].map(s=>`<line x1="${xOf(s)}" x2="${xOf(s)}" y1="24" y2="316" stroke="var(--line)" stroke-width="${s===1?2:1}" ${s===1?'':'stroke-dasharray="3 5"'}/><text class="svgtxt" x="${xOf(s)}" y="336" text-anchor="middle" font-size="14">${s}</text>`).join('');
+ const x1=xOf(1);
+ const qr=`<rect x="56" y="24" width="${x1-56}" height="146" rx="8" fill="var(--q-star)"/><rect x="${x1}" y="24" width="${616-x1}" height="146" rx="8" fill="var(--q-qm)"/><rect x="56" y="170" width="${x1-56}" height="146" rx="8" fill="var(--q-cow)"/><rect x="${x1}" y="170" width="${616-x1}" height="146" rx="8" fill="var(--q-dog)"/>`;
+ const q=reveal?`<text class="svgtxt" x="64" y="160" font-size="14">STAR</text><text class="svgtxt" x="610" y="160" font-size="14" text-anchor="end">QUESTION MARK</text><text class="svgtxt" x="64" y="308" font-size="14">CASH COW</text><text class="svgtxt" x="610" y="308" font-size="14" text-anchor="end">DOG</text>`:'';
+ const b=PROD.map(p=>{
+  const x=xOf(p.share),y=yOf(p.growth),r=3.2*Math.sqrt(p.sales),t=S.alloc[p.id];
+  const left=p.id==='cargo'||p.id==='moped';
+  const lab=`<text x="${left?x-r-8:x+r+8}" y="${y+5}" font-size="15" font-weight="600" text-anchor="${left?'end':'start'}" fill="var(--ink)" style="font-family:var(--f-body)">${p.name}</text>`;
+  const coin=t>0?`<circle cx="${x+r*.72}" cy="${y-r*.72}" r="11" fill="var(--coin)"/><text x="${x+r*.72}" y="${y-r*.72+5}" text-anchor="middle" font-size="14" font-weight="700" fill="var(--coin-ink)" style="font-family:var(--f-mono)">${t}</text>`:'';
+  return `<circle cx="${x}" cy="${y}" r="${r}" fill="${p.col}" fill-opacity=".4" stroke="${p.col}" stroke-width="3"/>${lab}${coin}`;
+ }).join('');
+ return `<svg viewBox="0 0 640 360" role="img" aria-label="BCG matrix of the four Delta Wheels products. Bubble size shows yearly sales.">
+  ${qr}${gl}${sl}${q}${b}
+  <text class="svgtxt" x="616" y="354" font-size="13" text-anchor="end">lower share →</text>
+  <text class="svgtxt" x="56" y="354" font-size="13">← higher relative market share</text>
+  <text class="svgtxt" x="14" y="170" font-size="13" text-anchor="middle" transform="rotate(-90 14 170)">market growth per year</text></svg>`;
+}
+const REFRESH=`<details class="refresh"><summary>Need a reminder about the BCG matrix?</summary><dl>
+   <dt>Star</dt><dd>High share, high growth. Invest to keep the lead.</dd>
+   <dt>Cash cow</dt><dd>High share, low growth. Keep it going and collect the cash.</dd>
+   <dt>Question mark</dt><dd>Low share, high growth. Decide: invest carefully or let go.</dd>
+   <dt>Dog</dt><dd>Low share, low or falling growth. Little reason to invest.</dd></dl></details>`;
+function facts(p){return `<dl class="facts">
+    <div><dt>Yearly sales</dt><dd>EGP ${p.sales} million</dd></div>
+    <div><dt>Relative market share</dt><dd>${p.share}<small>${p.shareNote}</small></dd></div>
+    <div><dt>Market growth</dt><dd>${p.growthTxt}</dd></div></dl>`}
+function bcgView(){
+ const done=!!S.bcg;
+ const left=PROD.filter(p=>!S.cls[p.id]).length;
+ const cards=PROD.map(p=>`<article class="card pcard">
+   <div><h3><i class="dot" style="background:${p.col}"></i>${p.name}</h3><p class="what">${p.what}</p></div>
+   ${facts(p)}
+   <div class="field">Which BCG quadrant?
+    <div class="seg">${Object.entries(CLS).map(([k,v])=>{
+     const pk=S.cls[p.id];const cl=done?(k===p.bcg?'right':pk===k?'wrong':''):(pk===k?'sel':'');
+     return `<button type="button" class="segb ${cl}" data-act="cpick" data-p="${p.id}" data-k="${k}" data-fk="b-${p.id}-${k}" aria-pressed="${pk===k}" ${done?'disabled':''}>${v}</button>`}).join('')}</div></div>
+  </article>`).join('');
+ let res='';
+ if(done){
+  res=`<section class="card res"><div class="row" style="justify-content:space-between"><h2 style="font-size:28px">Council feedback</h2><span class="earn">+${S.bcg.total} pts</span></div>
+   ${S.bcg.rows.map(x=>`<div class="rp"><b>${x.p.name}</b><span>${x.ok?'<span class="ok">Right quadrant.</span>':`<span class="no">Check the quadrant.</span> You chose ${CLS[x.c]}. It is a ${CLS[x.p.bcg]}.`} ${x.p.bcgWhy}</span></div>`).join('')}
+   <div><button class="btn" type="button" data-act="next">Next round</button></div></section>`;
+ }
+ return `<div class="q-head"><span class="kicker">${rlabel()}</span>
+  <h2>Place each product on the BCG matrix.</h2>
+  <p class="lead">Read the sales, share and growth for each product, then pick its quadrant.</p></div>
+  <section class="card mapcard">${mapSvg(done)}<p class="note">Bubble size shows yearly sales. The lines mark a relative market share of 1.0 and market growth of 10%. Quadrant names appear after you check.</p></section>
+  ${REFRESH}
+  <div class="grid2">${cards}</div>
+  ${done?'':`<div class="row"><button class="btn" type="button" data-act="bsubmit" ${left?'disabled':''}>Check my answers</button>${left?`<span class="need">${left} product${left>1?'s':''} still to place.</span>`:`<span class="need">You cannot change your answers after you check.</span>`}</div>`}
+  ${res}`;
+}
+function pips(t){return `<div class="pips" aria-hidden="true">${[1,2,3,4,5].map(i=>`<span class="coin sm ${i<=t?'':'empty'}"></span>`).join('')}</div>`}
+function investView(){
+ const spent=Object.values(S.alloc).reduce((a,b)=>a+b,0),left=10-spent,done=!!S.inv;
+ const missing=[];
+ if(left>0)missing.push(`spend ${left} more token${left>1?'s':''}`);
+ PROD.forEach(p=>{if(S.alloc[p.id]===0&&!S.zero[p.id])missing.push(`choose drop or keep for ${p.name}`)});
+ const cards=PROD.map(p=>{
+  const t=S.alloc[p.id],dis=done?'disabled':'';
+  return `<article class="card pcard">
+   <div><h3><i class="dot" style="background:${p.col}"></i>${p.name} <span class="chip">${CLS[p.bcg]}</span></h3><p class="what">${p.what}</p></div>
+   ${facts(p)}
+   <div class="field">Tokens (0 to 5)
+    <div class="stepper"><button type="button" data-act="tok" data-p="${p.id}" data-d="-1" data-fk="m-${p.id}" aria-label="Remove a token from ${p.name}" ${dis||t===0?'disabled':''}>&minus;</button><span class="n" aria-live="polite">${t}</span><button type="button" data-act="tok" data-p="${p.id}" data-d="1" data-fk="p-${p.id}" aria-label="Add a token to ${p.name}" ${dis||t===5||left===0?'disabled':''}>+</button>${pips(t)}</div></div>
+   ${t===0?`<label class="field" for="zero-${p.id}">With 0 tokens, would you drop it or leave it to run on its own?
+    <select id="zero-${p.id}" data-sel="zero" data-p="${p.id}" data-fk="zero-${p.id}" ${dis}><option value="">Choose</option><option value="drop" ${S.zero[p.id]==='drop'?'selected':''}>Drop it</option><option value="run" ${S.zero[p.id]==='run'?'selected':''}>Leave it to run on its own</option></select></label>`:''}
+  </article>`}).join('');
+ let res='';
+ if(done){
+  res=`<section class="card res"><div class="row" style="justify-content:space-between"><h2 style="font-size:28px">Council feedback</h2><span class="earn">+${S.inv.total} pts</span></div>
+   ${S.inv.rows.map(x=>`<div class="rp"><b>${x.p.name}: ${x.n} token${x.n===1?'':'s'}</b><span>${esc(x.at)}</span></div>`).join('')}
+   <div><button class="btn" type="button" data-act="next">On to the twist</button></div></section>`;
+ }
+ return `<div class="q-head"><span class="kicker">${rlabel()}</span>
+  <h2>Spend your 10 tokens.</h2>
+  <p class="lead">You must spend all 10 tokens. No product can get more than 5. Each card shows the product's BCG quadrant.</p></div>
+  <section class="card mapcard">${mapSvg(true)}</section>
+  <div class="tray" role="status"><div class="coins" aria-hidden="true">${Array.from({length:10},(_,i)=>`<span class="coin ${i<spent?'':'empty'}"></span>`).join('')}</div><b>${left} left</b></div>
+  <div class="grid2">${cards}</div>
+  ${done?'':`<div class="row"><button class="btn" type="button" data-act="isubmit" ${missing.length?'disabled':''}>Submit my split</button>${missing.length?`<span class="need">Still to do: ${missing.slice(0,3).join(', ')}${missing.length>3?` and ${missing.length-3} more`:''}.</span>`:`<span class="need">You cannot change your split after you submit.</span>`}</div>`}
+  ${res}`;
+}
+
+function summaryText(){
+ const n=total(),rs=roundScores();
+ const lines=[`THE DELTA WHEELS COUNCIL (BUS 1410)`,`Team: ${S.team}`,`Members: ${S.members.replace(/\s*\n\s*/g,', ')||'not listed'}`,`Score: ${n}/100 (${titleFor(n)})`,''];
+ ROUNDS.forEach((r,i)=>lines.push(`Round ${i+1} ${r.n}: ${rs[i]}/20`));
+ lines.push('','Our recommendation:');
+ PROD.forEach(p=>lines.push(`- ${p.name}: ${CLS[S.cls[p.id]]||'-'}, ${S.alloc[p.id]} tokens${S.alloc[p.id]===0?` (${S.zero[p.id]==='drop'?'drop':'run on its own'})`:''}`));
+ return lines.join('\n');
+}
+function endView(){
+ const n=total(),rs=roundScores();
+ const bd=[
+  ['Customer Expert','Picked the right target customer on the first try.',e('cust')===8],
+  ['Value Sorter','Sorted all six value cards correctly.',e('vsort')===12],
+  ['Mission Maker','Got every mission question right.',e('msort')+e('mrewrite')===20],
+  ['BCG Expert','Placed all four products in the right quadrant.',rs[2]===20],
+  ['Smart Investor','Split the tokens well across all four products.',rs[3]===20],
+  ['Twist Survivor','Handled the breaking news well.',rs[4]>=15]];
+ const cols=['var(--r1)','var(--r2)','var(--r3)','var(--r4)','var(--r5)'];
+ const bar=(l,v,m,c)=>`<div class="bar"><span>${l}</span><span class="t"><i style="width:${v/m*100}%;background:${c}"></i></span><span>${v}/${m}</span></div>`;
+ return `<section class="hero"><span class="kicker">The CEO's verdict for ${esc(S.team)}</span>
+  <div class="big">${n}<small> / 100</small></div><h1 style="font-size:clamp(30px,6vw,48px)">${titleFor(n)}</h1></section>
+  <section class="card bars">${ROUNDS.map((r,i)=>bar(r.n,rs[i],20,cols[i])).join('')}</section>
+  <section class="stage"><h2 style="font-size:28px">Badges</h2><div class="badges">${bd.map(b=>`<div class="badge ${b[2]?'':'off'}"><span class="coin"></span><div><b>${b[0]}</b><span>${b[1]}</span></div></div>`).join('')}</div></section>
+  <section class="card"><h2 style="font-size:28px;margin-bottom:10px">Your recommendation</h2>
+   <div class="tablewrap"><table><thead><tr><th>Product</th><th>Your BCG quadrant</th><th class="num">Tokens</th><th>Correct quadrant</th></tr></thead><tbody>
+   ${PROD.map(p=>`<tr><td>${p.name}</td><td>${CLS[S.cls[p.id]]||'-'}</td><td class="num">${S.alloc[p.id]}</td><td>${CLS[p.bcg]}</td></tr>`).join('')}</tbody></table></div></section>
+  <section class="card stage"><h2 style="font-size:28px">Submit your work</h2><p class="lead">Copy this summary and send it to your instructor.</p>
+   <textarea class="sum" id="sum" readonly>${esc(summaryText())}</textarea>
+   <div class="row"><button class="btn" type="button" data-act="copy">Copy summary</button><span class="need" id="copied" role="status"></span></div></section>`;
+}
+
+/* ---------- render ---------- */
+function render(){
+ track();
+ let h='';
+ const sc=S.screen;
+ if(sc==='intro')h=introView();
+ else if(sc==='r3')h=bcgView();
+ else if(sc==='r4')h=investView();
+ else if(sc==='end')h=endView();
+ else{const list=steps(),step=list[S.i];h=step.type==='sort'?sortView(step,S.i,list):choiceView(step,S.i,list)}
+ const m={r1:'s1',r2:'s2',r3:'s3',r4:'s4',r5:'s5'};
+ $('#stage').className='stage '+(m[sc]||'');
+ 
+ if(S.restored){h=`<p class="need" role="status">Welcome back. Your answers were saved, so you continue where you left off.</p>`+h;S.restored=false}
+ $('#stage').innerHTML=h;
+ save();
+ if(S.focus){const el=document.querySelector(`[data-fk="${S.focus}"]`);if(el&&!el.disabled)el.focus();S.focus=null}
+}
+function go(screen){S.screen=screen;S.i=0;render();window.scrollTo(0,0)}
+
+/* ---------- events ---------- */
+document.addEventListener('click',ev=>{
+ const b=ev.target.closest('[data-act]');if(!b)return;
+ const a=b.dataset.act;
+ if(a==='start'){ev.preventDefault();S.team=($('#team').value.trim())||'Team Delta';S.members=$('#members').value.trim();go('r1')}
+ else if(a==='pick'){
+  const step=steps()[S.i],st=S.q[step.id];if(st.done)return;
+  const i=+b.dataset.i;if(st.tries.includes(i))return;
+  st.tries.push(i);
+  if(step.opts[i].ok){st.done=true;st.earned=st.tries.length===1?step.pts:st.tries.length===2?Math.round(step.pts/2):0}
+  render();
+ }
+ else if(a==='spick'){
+  const step=steps()[S.i],st=S.sort[step.id];if(st.done)return;
+  st.picks[+b.dataset.c]=b.dataset.k;S.focus=b.dataset.fk;render();
+ }
+ else if(a==='scheck'){
+  const step=steps()[S.i],st=S.sort[step.id];
+  st.earned=step.cards.reduce((t,c,i)=>t+(st.picks[i]===c.a?step.per:0),0);st.done=true;render();
+ }
+ else if(a==='cont'){
+  const list=steps();
+  if(S.i<list.length-1){S.i++;render();window.scrollTo(0,0)}
+  else go(NEXT[S.screen]);
+ }
+ else if(a==='cpick'){S.cls[b.dataset.p]=b.dataset.k;S.focus=b.dataset.fk;render()}
+ else if(a==='bsubmit'){S.bcg=scoreBcg();render();document.querySelector('.res')?.scrollIntoView({behavior:'smooth',block:'start'})}
+ else if(a==='tok'){
+  const p=b.dataset.p,d=+b.dataset.d,spent=Object.values(S.alloc).reduce((x,y)=>x+y,0);
+  const n=S.alloc[p]+d;if(n<0||n>5||spent+d>10)return;
+  S.alloc[p]=n;if(n>0)delete S.zero[p];
+  S.focus=(d>0?'p-':'m-')+p;render();
+ }
+ else if(a==='isubmit'){S.inv=scoreInv();render();document.querySelector('.res')?.scrollIntoView({behavior:'smooth',block:'start'})}
+ else if(a==='next')go(NEXT[S.screen]);
+ else if(a==='copy'){
+  const ta=$('#sum'),msg=$('#copied');
+  const fallback=()=>{ta.focus();ta.select();msg.textContent='Press Ctrl+C (or Cmd+C) to copy the selected text.'};
+  try{navigator.clipboard.writeText(ta.value).then(()=>{msg.textContent='Copied.'},fallback)}catch(_){fallback()}
+ }
+ else if(a==='restart'){S=fresh();render();window.scrollTo(0,0)}
+ else if(a==='casefile'){$('#case').hidden=false;$('#caseclose').focus()}
+ else if(a==='closecase'){$('#case').hidden=true;$('#casebtn').focus()}
+});
+document.addEventListener('change',ev=>{
+ const s=ev.target.closest('[data-sel]');if(!s)return;
+ const p=s.dataset.p,v=s.value;
+ if(v)S.zero[p]=v;else delete S.zero[p];
+ S.focus=s.dataset.fk;render();
+});
+document.addEventListener('submit',ev=>{if(ev.target.id==='startform'){ev.preventDefault();document.querySelector('[data-act="start"]').click()}});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!$('#case').hidden){$('#case').hidden=true;$('#casebtn').focus()}});
+$('#case').addEventListener('click',ev=>{if(ev.target.id==='case'){$('#case').hidden=true}});
+render();
+})();
+</script>
+
+</body>
+</html>
